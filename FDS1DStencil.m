@@ -24,7 +24,8 @@ set(gca,'ytick',[1:5],'yticklabel', Ynames, 'FontSize', 18)
 % grid on;
 % view(30,12);
 
-coordsCur = [1 2; 2 2; 3 2; 4 2; 5 2];
+coordsNext = [2 3; 3 3; 4 3];
+coordsCur = [2 2; 3 2; 4 2];
 coordsPrev = [2 1; 3 1; 4 1];
 
 % coordsCur = [2 2; 3 2; 4 2];
@@ -42,9 +43,14 @@ for i = 1:length(coordsPrev(:,1))
     'MarkerEdgeColor','k',...
     'MarkerFaceColor',[0, 84/255 , 166/255]);
 end
-scatter(3, 3, 200,...
-'MarkerEdgeColor','k',...
-'MarkerFaceColor',[1, 1 ,0]);
+for i = 1:length(coordsNext(:,1))
+    scatter(coordsNext(i, 1), coordsNext(i, 2), 200, ...
+    'MarkerEdgeColor','k',...
+    'MarkerFaceColor',[1, 1, 0]);
+end
+% scatter(3, 3, 200,...
+% 'MarkerEdgeColor','k',...
+% 'MarkerFaceColor',[1, 1 ,0]);
 
 annotation('doublearrow',[0.685 0.825],[0.93 0.93])
 annotation('doublearrow',[0.905 0.905],[0.564 0.8])
