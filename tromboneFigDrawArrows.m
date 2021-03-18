@@ -53,18 +53,9 @@ if drawVnmh
     end
 end
 
-%% Arrows calculating velocities v
-color = [alphArr, alphArr, 1];
-arrowX = arrowX + 0.5;
-arrowY = arrowY + 1 * vScale;
-for i = 1:length(arrowX)
-    myArrow(arrowX(i, :), arrowY(i,:), arrowLineWidth, arrowHeadWidth, arrowHeadLength, color);
-end
-
 %% Arrows calculating q^n
 color = [1, alphArr, alphArr];
-arrowX = arrowX(3:end, :) + alf + 0.5;
-arrowY = arrowY - 1 * vScale;
+arrowX = arrowX + 1 + alf;
 
 if drawVnmh
     for i = 1:length(arrowX)
@@ -79,11 +70,17 @@ if drawVnmh
     end
 end
 
+%% Arrows calculating velocities v
+color = [alphArr, alphArr, 1];
+arrowX = arrowX - 0.5 - alf;
+arrowY = arrowY + 1 * vScale;
+for i = 1:length(arrowX)
+    myArrow(arrowX(i, :), arrowY(i,:), arrowLineWidth, arrowHeadWidth, arrowHeadLength, color);
+end
 
 %% Arrows calculating velocities w
 color = [1, alphArr, alphArr];
-arrowX = arrowX - 0.5;
-arrowY = arrowY + 1 * vScale;
+arrowX = arrowX + alf;
 
 for i = 1:length(arrowX)
     myArrow(arrowX(i, :), arrowY(i,:), arrowLineWidth, arrowHeadWidth, arrowHeadLength, color);
@@ -109,12 +106,12 @@ end
 
 %% Draw curved arrows for connection points
 aHO = 0.02; % arrowHeadOffset
-arrowX = [[xPLocs(end-1), xPLocs(end-1) + alf - aHO; ...
-              xPLocs(end), xQLocs(1) - 1 + aHO; ...
-              xQLocs(1), xQLocs(1) - 1 - 0.5 * aHO] + 0.5; ...
-          [xPLocs(end), xPLocs(end) + 1 + 0.5 * aHO; ...
-              xPLocs(end) + alf, xPLocs(end) + 1 - aHO; ...
-              xQLocs(2), xPLocs(end) + 1 + aHO]];
+arrowX = [xPLocs(end-1), xPLocs(end-1) + alf - aHO; ...
+          xPLocs(end), xPLocs(end) + 1 + 0.5 * aHO; ...
+          xPLocs(end) + alf, xPLocs(end) + 1 - aHO; ...
+          xPLocs(end), xQLocs(1) - 1 + aHO; ...
+          xQLocs(1), xQLocs(1) - 1 - 0.5 * aHO; ...
+          xQLocs(2), xPLocs(end) + 1 + aHO];
       
 colors = [alphArrInterp, alphArrInterp, 1; ...
           alphArrInterp, alphArrInterp, 1; ...
@@ -123,8 +120,7 @@ colors = [alphArrInterp, alphArrInterp, 1; ...
           1, alphArrInterp, alphArrInterp; ...
           1, alphArrInterp, alphArrInterp];
 % color = [1, alphArrInterp, 1]; % purple
-arrowY = [repmat([-1, -1] * vScale, length(arrowX) * 0.5, 1); ...
-          repmat([-2, -2] * vScale, length(arrowX) * 0.5, 1)]; 
+arrowY = repmat([-2, -2] * vScale, length(arrowX), 1); 
 
 for i = 1:length(arrowX)
     if i == 1 || i == length(arrowX)
@@ -132,7 +128,7 @@ for i = 1:length(arrowX)
     else
         bend = curvatureArcs;
     end
-    if i == 1 || i == length(arrowX) - 2 || i == length(arrowX) - 1
+    if i < 4
         myArrow(arrowX(i, :), arrowY(i,:), arrowLineWidth * 2/3, arrowHeadWidth, arrowHeadLength, colors(i,:), '-.', bend, false);
     else
         myArrow(arrowX(i, :), arrowY(i,:), arrowLineWidth * 2/3, arrowHeadWidth, arrowHeadLength, colors(i,:), '-.', -bend, false);

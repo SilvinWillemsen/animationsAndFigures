@@ -94,9 +94,7 @@ for n = 0:1
     vOffset = -1;
     if n ~= 1 || drawVnmh
 
-        %%%% v %%%%
-        
-        % plot lines
+        % v
         if alignDashedToOutside
             xVLocs = xPLocs(2:end) - 0.5;
             plot([xVLocs(1), xVLocs(numPLeft)], [0, 0] + (vOffset - n * 2) * vScale, 'LineWidth', 2, 'Color', 'b');
@@ -105,23 +103,20 @@ for n = 0:1
 
             vXLocs = [xVLocs(1:numPLeft-1), xVLocs(end-numPRight+1:end)];
         else
-            xVLocs = xPLocs(1:end) + 0.5;
+            xVLocs = xPLocs(1:end-1) + 0.5;
             plot([xVLocs(1), xVLocs(numPLeft+1)], [0, 0] + (vOffset - n * 2) * vScale, 'LineWidth', 2, 'Color', 'b');
             plot([xVLocs(numPLeft+1), xVLocs(numPLeft+2)], [0, 0] + (vOffset - n * 2) * vScale, '--', 'LineWidth', dashedLineWidth, 'Color', 'b');
             plot([xVLocs(numPLeft+2), xVLocs(end)], [0, 0] + (vOffset - n * 2) * vScale, 'LineWidth', 2, 'Color', 'b');
 
-            vXLocs = [xVLocs(1:numPLeft), xVLocs(end-numPRight+1:end)];
+            vXLocs = [xVLocs(1:numPLeft), xVLocs(end-numPRight+2:end)];
         end
-        
-        % scatter grid points
-        scatter(vXLocs, zeros(1, length(vXLocs)) + (vOffset - n * 2) * vScale,  80, 'b', 's', 'filled');
-%         if n == 1
-%             scatter(vXLocs(end) + 1, 0 + (vOffset - n * 2) * vScale, 80, 'b', 's', 'LineWidth', 1.5);
-%         end
 
-        %%%% w %%%%
+        scatter(vXLocs, zeros(1, length(vXLocs)) + (vOffset - n * 2) * vScale,  400, 'b', '.');
+        scatter(vXLocs(end) + 1, 0 + (vOffset - n * 2) * vScale, 80, 'b', 's', 'LineWidth', 1.5);
 
-        % plot lines
+
+        % w
+
         if alignDashedToOutside
             xWLocs = xQLocs(1:end-1) + 0.5;
             plot([xWLocs(1), xWLocs(numQLeft+1)], [0, 0] + (vOffset - n * 2) * vScale, 'LineWidth', 2, 'Color', 'r');
@@ -138,16 +133,13 @@ for n = 0:1
             wXLocs = [xWLocs(1:numQLeft-1), xWLocs(end-numQRight+1:end)];
         end
 
-        % scatter grid points
-        scatter(wXLocs, zeros(1, length(wXLocs)) + (vOffset - n * 2) * vScale,  80, 'r', 's', 'filled');
-        if n == 0
-            scatter(wXLocs(1) - 1, 0 + (vOffset - n * 2) * vScale, 80, 'r', 's', 'LineWidth', 1.5);
-        end
+        scatter(wXLocs, zeros(1, length(wXLocs)) + (vOffset - n * 2) * vScale,  400, 'r', '.');
+        scatter(wXLocs(1) - 1, 0 + (vOffset - n * 2) * vScale, 80, 'r', 's', 'LineWidth', 1.5);
     end
 
     %% Draw texts
     textOffset = 0.2;
-    vConnXOffset = 0.15;
+
     if ~timeIndices
         idxP = "";
         idxV = "";
@@ -210,7 +202,7 @@ for n = 0:1
             rangeWStart = -numQRight+2;
         else
             rangeVEnd = numPLeft-1;
-            rangeVStart = -numPRight+1;
+            rangeVStart = -numPRight+2;
             rangeWEnd = numQLeft-2;                   
             rangeWStart = -numQRight+1;
 
@@ -219,32 +211,33 @@ for n = 0:1
             textVNext = [textVNext, "$v_{"+ num2str(1 + idx*2) + "/2}^{"+ idxV + "}$"];
         end
 
-        for idx = rangeVStart:-1
-            textVNext = [textVNext, "$v_{M_p" + num2str(1 + idx*2) + "/2}^{"+ idxV + "}$"];
+        for idx = rangeVStart:0
+            textVNext = [textVNext, "$v_{M_p" + num2str(-1 + idx*2) + "/2}^{"+ idxV + "}$"];
         end
-        for idx = 1:rangeWEnd
+
+        for idx = 0:rangeWEnd
             textWNext = [textWNext, "$w_{"+ num2str(1 + idx*2) + "/2}^{"+ idxV + "}$"];
         end
         for idx = rangeWStart:0
             textWNext = [textWNext, "$w_{M_q" + num2str(-1 + idx*2) + "/2}^{"+ idxV + "}$"];
         end
 
-        text(vXLocs(1:end-1), zeros(1, length(vXLocs)-1) + (vOffset + textOffset - n * 2) * vScale, textVNext, 'interpreter', 'latex', ...
+        text(vXLocs, zeros(1, length(vXLocs)) + (vOffset + textOffset - n * 2) * vScale, textVNext, 'interpreter', 'latex', ...
            'Fontsize', fontSize, 'color', 'b', 'horizontalAlignment', 'center', 'verticalAlignment', 'middle');
 
-        text(wXLocs(2:end), zeros(1, length(wXLocs)-1) + (vOffset + textOffset - n * 2) * vScale, textWNext, 'interpreter', 'latex', ...
+
+        text(wXLocs, zeros(1, length(wXLocs)) + (vOffset + textOffset - n * 2) * vScale, textWNext, 'interpreter', 'latex', ...
            'Fontsize', fontSize, 'color', 'r', 'horizontalAlignment', 'center', 'verticalAlignment', 'middle');
 
         vVelTextOffset = -0.8 * textOffset;
 
-        text(wXLocs(1) + vConnXOffset * 0.5, (vOffset + textOffset - n * 2) * vScale, "$w_{1/2}^{"+ idxV + "}$", 'interpreter', 'latex', ...
-           'Fontsize', fontSize, 'color', 'r', 'horizontalAlignment', 'center', 'verticalAlignment', 'middle');
-
-
-        text(vXLocs(end) - vConnXOffset, (vOffset + textOffset - n * 2) * vScale, "$v_{M_p+1/2}^{"+ idxV + "}$", 'interpreter', 'latex', ...
+        text(vXLocs(end) + 1, (vOffset + vVelTextOffset - n * 2) * vScale, "$v_{M_p+1/2}^{"+ idxV + "}$", 'interpreter', 'latex', ...
            'Fontsize', fontSize, 'color', 'b', 'horizontalAlignment', 'center', 'verticalAlignment', 'middle');
 
+        text(wXLocs(1) - 1, (vOffset + vVelTextOffset - n * 2) * vScale, "$w_{-1/2}^{"+ idxV + "}$", 'interpreter', 'latex', ...
+           'Fontsize', fontSize, 'color', 'r', 'horizontalAlignment', 'center', 'verticalAlignment', 'middle');
     end
+
 end
 %% virtual points
 vPressureTextOffset = -1.5 * textOffset;
@@ -252,17 +245,15 @@ vPressureTextOffset = -1.5 * textOffset;
 pXMp1 = pXLocs(end) + 1;
 scatter(pXMp1, 0 - n * 2 * vScale, 80, 'b', 'Linewidth', 2);
 %             arrow([pXMp1, pXMp1], [vpTextOffset * 0.7, vpTextOffset * 0.2] - n * 2 * vScale, 1.5, 0.15, 0.25, 'b')
+
 text(pXMp1, (vPressureTextOffset - n * 2) * vScale, "$p_{M_p+1}^{" + idxP + "}$", 'interpreter', 'latex', ...
    'Fontsize', fontSize, 'color', 'b', 'horizontalAlignment', 'center');
 
-text(wXLocs(1) - 1, (vOffset + vPressureTextOffset) * vScale, "$w_{-1/2}^{"+ idxV + "}$", 'interpreter', 'latex', ...
-    'Fontsize', fontSize, 'color', 'r', 'horizontalAlignment', 'center', 'verticalAlignment', 'middle');
+qXm1 = qXLocs(1) - 1;
 
-% qXm1 = qXLocs(1) - 1;
-
-% scatter(qXm1, 0 - n * 2 * vScale, 80, 'r', 'Linewidth', 2);
-% text(qXm1, (vPressureTextOffset - n * 2) * vScale, "$q_{-1}^{" + idxP + "}$", 'interpreter', 'latex', ...
-%    'Fontsize', fontSize, 'color', 'r', 'horizontalAlignment', 'center');
+scatter(qXm1, 0 - n * 2 * vScale, 80, 'r', 'Linewidth', 2);
+text(qXm1, (vPressureTextOffset - n * 2) * vScale, "$q_{-1}^{" + idxP + "}$", 'interpreter', 'latex', ...
+   'Fontsize', fontSize, 'color', 'r', 'horizontalAlignment', 'center');
 
 %             arrow([qXm1, qXm1], [vpTextOffset * 0.7, vpTextOffset * 0.2] - n * 2 * vScale, 1.5, 0.15, 0.25, 'r')
 
