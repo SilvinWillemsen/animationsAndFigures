@@ -1,5 +1,5 @@
 %{
-    Drawing errors for the Trombone system figure. To be used with
+    Drawing arrows for the Trombone system figure. To be used with
     trombone.m
 %}
 
