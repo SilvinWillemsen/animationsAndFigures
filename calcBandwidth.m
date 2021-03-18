@@ -1,4 +1,4 @@
-function [fftOut, lastPeak] = calcBandwidth (quality, halfWidth, plotthings)
+function [fftOut, lastPeak] = calcBandwidth (quality, halfWidth, plotthings, height)
     fs = 44100;
     k = 1/fs;
     lengthSound = fs*0.1;
@@ -24,7 +24,7 @@ function [fftOut, lastPeak] = calcBandwidth (quality, halfWidth, plotthings)
         u = uNext;
         out(n) = uNext(floor(N/3));
         if (plotthings > 1 && n == plotthings) || n == -1
-            plot(0:N, uNext, 'k', 'Linewidth', 2);
+            plot(0:N, uNext + height, 'k', 'Linewidth', 1.5);
             ylim([-0.8, 0.8])
             drawnow;
         end
