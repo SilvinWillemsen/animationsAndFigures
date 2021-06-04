@@ -24,7 +24,7 @@ set(gca,'ytick',[1:5],'yticklabel', Ynames, 'FontSize', 18)
 % grid on;
 % view(30,12);
 
-coordsNext = [2 3; 3 3; 4 3];
+coordsNext = [3 3];
 coordsCur = [2 2; 3 2; 4 2];
 coordsPrev = [2 1; 3 1; 4 1];
 

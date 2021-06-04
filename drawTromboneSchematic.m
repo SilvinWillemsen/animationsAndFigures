@@ -5,7 +5,7 @@
 clear all;
 
 figure("Position", [0, 1000, 1300, 350])
-set(gca, 'Position', [0.00222222222222222 0.01 0.994444444444444 0.986666666666667]);
+set(gca, 'Position', [0.005 0.01 0.994444444444444 0.986666666666667]);
 
 %% options
 dashedLineWidth = 1;
@@ -13,7 +13,10 @@ timeIndices = false;
 
 fontSize = 18;
 
-alf = 1.25;
+Mp = "M^n"; % M or M_p subscript
+addAlpha = true;
+
+alf = 0.25;
 if alf <= 1
     pInterp = true;
 else
@@ -23,7 +26,7 @@ end
 if pInterp
     numPLeft = 4;
     numPRight = 3;
-    numQRight = 2;
+    numQRight = 1;
     numQLeft = 3;
 else
     numPLeft = 4;
@@ -220,7 +223,7 @@ for n = 0:(1+~pInterp)
         else
             num = num2str(idx);
         end
-        textPNext = [textPNext, "$p_{M_p" + num + "}^{"+ idxP + "}$"];
+        textPNext = [textPNext, "$p_{" + Mp + num + "}^{"+ idxP + "}$"];
     end
     
     for idx = 0:numQLeft-1
@@ -232,7 +235,7 @@ for n = 0:(1+~pInterp)
         else
             num = num2str(idx);
         end
-        textQNext = [textQNext, "$q_{M_q" + num + "}^{"+ idxP + "}$"];
+        textQNext = [textQNext, "$q_{M_q^n" + num + "}^{"+ idxP + "}$"];
     end
     
     
@@ -272,10 +275,10 @@ for n = 0:(1+~pInterp)
         end
         
         for idx = rangeVStart:0
-            textVNext = [textVNext, "$v_{M_p" + num2str(-1 + idx*2) + "/2}^{"+ idxV + "}$"];
+            textVNext = [textVNext, "$v_{" + Mp + num2str(-1 + idx*2) + "/2}^{"+ idxV + "}$"];
         end
         if ~pInterp
-            textVNext = [textVNext, "$v_{M_p+1/2}^{"+ idxV + "}$"];
+            textVNext = [textVNext, "$v_{" + Mp + "+1/2}^{"+ idxV + "}$"];
         end
         if pInterp
             for idx = 0:rangeWEnd
@@ -288,7 +291,7 @@ for n = 0:(1+~pInterp)
 
         end
         for idx = rangeWStart:0
-            textWNext = [textWNext, "$w_{M_q" + num2str(-1 + idx*2) + "/2}^{"+ idxV + "}$"];
+            textWNext = [textWNext, "$w_{M_q^n" + num2str(-1 + idx*2) + "/2}^{"+ idxV + "}$"];
         end
         
         if pInterp
@@ -326,7 +329,7 @@ for n = 0:(1+~pInterp)
         if pInterp || (~pInterp && n == 1)
             scatter(vXLocs(end) + 1, 0 + (vOffset - n * 2) * vScale, 80, 'b', 's', 'LineWidth', 1.5);
             
-            text(vXLocs(end) + 1, (vOffset + vVelTextOffset - n * 2) * vScale, "$v_{M_p+1/2}^{"+ idxV + "}$", 'interpreter', 'latex', ...
+            text(vXLocs(end) + 1, (vOffset + vVelTextOffset - n * 2) * vScale, "$v_{" + Mp + "+1/2}^{"+ idxV + "}$", 'interpreter', 'latex', ...
                 'Fontsize', fontSize, 'color', 'b', 'horizontalAlignment', 'center', 'verticalAlignment', 'middle');
             
             scatter(wXLocs(1) - 1, 0 + (vOffset - n * 2) * vScale, 80, 'r', 's', 'LineWidth', 1.5);
@@ -340,7 +343,7 @@ for n = 0:(1+~pInterp)
             scatter(pXMp1, 0 - n * 2 * vScale, 80, 'b', 'Linewidth', 2);
             %             arrow([pXMp1, pXMp1], [vpTextOffset * 0.7, vpTextOffset * 0.2] - n * 2 * vScale, 1.5, 0.15, 0.25, 'b')
             
-            text(pXMp1, (vPressureTextOffset - n * 2) * vScale, "$p_{M_p+1}^{" + idxP + "}$", 'interpreter', 'latex', ...
+            text(pXMp1, (vPressureTextOffset - n * 2) * vScale, "$p_{" + Mp + "+1}^{" + idxP + "}$", 'interpreter', 'latex', ...
                 'Fontsize', fontSize, 'color', 'b', 'horizontalAlignment', 'center');
             
             qXm1 = qXLocs(1) - 1;
@@ -351,7 +354,18 @@ for n = 0:(1+~pInterp)
         end
     end
 end
+if addAlpha
+    lHeight = -0.15;
+    lWidth = 0.025;
+    text((xPLocs(end) + xQLocs(1)) / 2, lHeight + sign(lHeight) * 0.15, "$\alpha = " + alf + "$", 'horizontalalignment', 'center',...
+        'interpreter', 'latex', 'Fontsize', 16, ...
+        'color', [0.4, 0.4, 0.4]);
 
+    plot ([xPLocs(end),  xQLocs(1)], [lHeight, lHeight], 'Linewidth', 1,  'color', [0.4, 0.4, 0.4]);
+    plot ([xPLocs(end), xPLocs(end)], [lHeight + lWidth, lHeight - lWidth], 'Linewidth', 1,  'color', [0.4, 0.4, 0.4]);
+    plot ([xQLocs(1),  xQLocs(1)], [lHeight + lWidth, lHeight - lWidth], 'Linewidth', 1,  'color', [0.4, 0.4, 0.4]);
+
+end
 
 
 %             arrow([qXm1, qXm1], [vpTextOffset * 0.7, vpTextOffset * 0.2] - n * 2 * vScale, 1.5, 0.15, 0.25, 'r')

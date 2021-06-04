@@ -27,7 +27,7 @@ for n = 1:loops
 %     uNext(172:N-172) = B(172:N-172, 172:N-172) * u(172:N-172) + C(172:N-172, 172:N-172) * uPrev(172:N-172);
     uPrev = u;
     u = uNext;
-    if mod(n, 10) == 0
+    if mod(n, 1) == 0
         if continuous
             plot(uNext, 'k', 'LineWidth', 5)
             s = floor((n*1000 - 1) / fs) / 1000;
@@ -49,9 +49,11 @@ for n = 1:loops
             end
                 string = ['n = ', num2str(n)];
         end
-        title (string, 'horizontalAlignment', 'center');
+%         title (string, 'horizontalAlignment', 'center');
         axis off;
         set(gca, 'FontSize', 15, 'Color', 'white')
+        set(gcf, 'Color', 'w')
+        xlim([0, 9000])
         ylim([-3, 3])
         drawnow;
         M(frame) = getframe(gcf);
