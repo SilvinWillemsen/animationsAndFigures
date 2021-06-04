@@ -19,8 +19,8 @@ h = L / N;          % Recalculation of grid spacing based on integer N
 lambdaSq = c^2 * k^2 / h^2; % Courant number squared
 
 % Boundary conditions ([D]irichlet or [N]eumann)
-bcLeft = "D";            
-bcRight = "D"; 
+bcLeft = "N";            
+bcRight = "N"; 
 
 if bcLeft == "D" && bcRight == "D"
     Dxx = toeplitz([-2, 1, zeros(1, N-3)]);
@@ -50,7 +50,7 @@ u = zeros(Nu+1, 1);
 
 %% Initial conditions (raised cosine)
 loc = round(0.5 * Nu);       % Center location
-halfWidth = round(Nu/2 - 1);    % Half-width of raised cosine
+halfWidth = round(Nu/10 - 1);    % Half-width of raised cosine
 width = 2 * halfWidth;      % Full width
 rcX = 0:width;              % x-locations for raised cosine
 
@@ -58,7 +58,7 @@ rc = 0.5 - 0.5 * cos(2 * pi * rcX / width); % raised cosine
 u(loc-halfWidth : loc+halfWidth) = rc; % initialise current state  
 
 % Set initial velocity to zero
-uPrev = u;
+uPrev = zeros(Nu+1,1);
 
 % Range of calculation
 range = 2:N;
@@ -89,15 +89,18 @@ for n = 1:lengthSound
 %         + 2 * lambdaSq * u(N); 
 %     end
 %     
-    kinEnergy(n) = rho * A/2 * h * sum((1/k * (u-uPrev)).^2);
-    potEnergy(n) = T/(2*h) * sum((u(2:end) - u(1:end-1)) .* (uPrev(2:end) - uPrev(1:end-1)));
-    hold off;
-    plot(kinEnergy(1:n))
-    hold on;
-    plot(potEnergy(1:n));
-    drawnow;
+%     kinEnergy(n) = rho * A/2 * h * sum((1/k * (u-uPrev)).^2);
+%     potEnergy(n) = T/(2*h) * sum((u(2:end) - u(1:end-1)) .* (uPrev(2:end) - uPrev(1:end-1)));
+%     hold off;
+%     plot(kinEnergy(1:n))
+%     hold on;
+%     plot(potEnergy(1:n));
+%     drawnow;
+plot(u)
+ylim([0, 20])
+drawnow;
     out(n) = u(outLoc);
-    
+    u(floor(N/2))
     % Update system states
     uPrev = u;
     u = uNext;

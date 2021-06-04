@@ -34,7 +34,7 @@ lambdaSq = c^2 * k^2 / h^2;
 muSq = kappa^2 * k^2 / h^4;
 
 % Boundary conditions ([c]lamped, [s]imply supported or [f]ree)
-bc = "s";            
+bc = "f";            
 
 % Change number of intervals to the usable range
 Norig = N;
@@ -58,7 +58,8 @@ range = 3:Norig-1;
 Id  = eye(N+1);
 Dxp = sparse(1:Norig+1, 1:Norig+1, -ones(1, Norig+1), Norig+1, Norig+1) + ...
      sparse(1:Norig, 2:Norig+1, ones(1, Norig), Norig+1, Norig+1);
- 
+Dxm = sparse(1:Norig+1, 1:Norig+1, ones(1, Norig+1), Norig+1, Norig+1) + ...
+     sparse(2:Norig+1, 1:Norig, -ones(1, Norig), Norig+1, Norig+1);
 Dxp = Dxp / h;
 DxxE = -Dxp' * Dxp;
 
