@@ -122,7 +122,8 @@ qTot = 0;
 %% Simulation loop
 for n = 1:lengthSound
     
-    vectorForm; % don't forget to remove! (and all initialisation before this) 
+    vectorForm; % dont
+  
     
     % Update equation 
     uNext = B / Amat * u + C / Amat * uPrev;
