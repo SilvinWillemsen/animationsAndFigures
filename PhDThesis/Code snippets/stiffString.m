@@ -16,8 +16,8 @@ I = pi * r^4 / 4;   % Area moment of inertia [m^4]
 T = 555;            % Tension [N]
 
 % Damping coefficients
-sig0 = 0;         % Frequency-independent damping [s^{-1}]
-sig1 = 0.0;       % Frequency-dependent damping [m^2/s]
+sig0 = 1;         % Frequency-independent damping [s^{-1}]
+sig1 = 0.005;       % Frequency-dependent damping [m^2/s]
 
 % Scheme coefficients
 c = sqrt(T / (rho * A));            % Wave speed [m/s]
@@ -56,11 +56,17 @@ range = 3:Norig-1;
 
 %% Initialise scheme matrices
 Id  = eye(N+1);
-Dxp = sparse(1:N+3, 1:N+3, -ones(1, N+3), N+3, N+3) + ...
-     sparse(1:N+2, 2:N+3, ones(1, N+2), N+3, N+3);
+Dxp = sparse(1:Norig+1, 1:Norig+1, -ones(1, Norig+1), Norig+1, Norig+1) + ...
+     sparse(1:Norig, 2:Norig+1, ones(1, Norig), Norig+1, Norig+1);
  
 Dxp = Dxp / h;
 DxxE = -Dxp' * Dxp;
+
+DxxE = sparse(2:N+3, 1:N+2, ones(1, N+2), N+3, N+3) + ...
+        sparse(1:N+3, 1:N+3, -2 * ones(1, N+3), N+3, N+3) + ... 
+        sparse(1:N+2, 2:N+3, ones(1, N+2), N+3, N+3) ;
+DxxE = DxxE / h^2;
+
 Dxx = toeplitz([-2, 1, zeros(1, N-1)]) / h^2;
 Dxxxx = Dxx * Dxx;
 
@@ -71,13 +77,13 @@ elseif bc == "f"
     Dxx(1, 2) = 2 / h^2;
     Dxx(end, end-1) = 2 / h^2;
     
-    Dxxxx(2, 2) = 5 / h^4;
-    Dxxxx(end-1, end-1) = 5 / h^4;
-    Dxxxx(1, 1:3) = [6, -4, 2] / h^4;
-    Dxxxx(end, end-2:end) = [2, -4, 6] / h^4;
+    Dxxxx(2, 1:4) = [-2, 5, -4, 1] / h^4;
+    Dxxxx(1,1:3) = [2, -4, 2] / h^4;
+    Dxxxx(end-1, end-3:end) = [1, -4, 5, -2] / h^4;
+    Dxxxx(end,end-2:end) = [2, -4, 2] / h^4;
 elseif bc == "s"
-    DxxE(end, end-1) = 2 / h^2;
-    DxxE(1, 2) = 2 / h^2;
+%     DxxE(end, end-1) = 2 / h^2;
+%     DxxE(1, 2) = 2 / h^2;
 end
 
 Amat = (1 + sig0 * k);
@@ -85,9 +91,9 @@ B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx + 2 * sig1 * k * Dxx;
 C = (-1 + sig0 * k) * Id - 2 * sig1 * k * Dxx;
 
 %% Initial conditions (raised cosine)
-ratio = 0.2;
+ratio = 0.3;
 loc = 20;       % Center location
-halfWidth = round(N/10);    % Half-width of raised cosine
+halfWidth = round(N/20);    % Half-width of raised cosine
 width = 2 * halfWidth;      % Full width
 rcX = 0:width;              % x-locations for raised cosine
 
@@ -121,32 +127,63 @@ for n = 1:lengthSound
         - muSq * (uVec(range+2) + uVec(range-2)) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(range) ...
         - 2 * sig1 * k / h^2 * (uPrevVec(range+1) + uPrevVec(range-1))) / (1+sig0 * k);
     
-    if bc ~= "c"
-        uNextVec(2) = ((2 - 2 * lambdaSq - 5 * muSq - 4 * sig1 * k / h^2) * uVec(2)...
+    if bc == "s"
+        uVirt1 = 2 * uVec(1) - uVec(2);       
+        uVirtN1 = 2 * uVec(end) - uVec(end-1);
+
+        uNextVec(2) = ((2 - 2 * lambdaSq - 6 * muSq - 4 * sig1 * k / h^2) * uVec(2)...
             + (lambdaSq + 4 * muSq + 2 * sig1 * k / h^2) * (uVec(3) + uVec(1)) ...
+            - muSq * (uVec(4) + uVirt1) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(2) ...
+            - 2 * sig1 * k / h^2 * (uPrevVec(3) + uPrevVec(1))) / (1+sig0 * k);
+        
+        uNextVec(end-1) = ((2 - 2 * lambdaSq - 6 * muSq - 4 * sig1 * k / h^2) * uVec(end-1)...
+            + (lambdaSq + 4 * muSq + 2 * sig1 * k / h^2) * (uVec(end-2) + uVec(end)) ...
+            - muSq * (uVec(end-3) + uVirtN1) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(end-1) ...
+            - 2 * sig1 * k / h^2 * (uPrevVec(end-2) + uPrevVec(end))) / (1+sig0 * k);
+    elseif bc == "f"
+%         uVirt2 = uVec(2) - 2 * uVec(1) + 2 * uVirt1;
+%         uVirtN2 = uVec(end-1) - 2 * uVec(end) + 2 * uVirtN1;
+% 
+%         uPrevVirt1 = 2 * uPrevVec(1) - uPrevVec(2);       
+%         uPrevVirtN1 = 2 * uPrevVec(end) - uPrevVec(end-1);
+
+        uNextVec(2) = ((2 - 2 * lambdaSq - 5 * muSq - 4 * sig1 * k / h^2) * uVec(2)...
+            + (lambdaSq + 4 * muSq + 2 * sig1 * k / h^2) * (uVec(3)) ...
+            + (lambdaSq + 2 * muSq + 2 * sig1 * k / h^2) * (uVec(1)) ...
             - muSq * uVec(4) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(2) ...
             - 2 * sig1 * k / h^2 * (uPrevVec(3) + uPrevVec(1))) / (1+sig0 * k);
         
         uNextVec(end-1) = ((2 - 2 * lambdaSq - 5 * muSq - 4 * sig1 * k / h^2) * uVec(end-1)...
-            + (lambdaSq + 4 * muSq + 2 * sig1 * k / h^2) * (uVec(end-2) + uVec(end)) ...
+            + (lambdaSq + 4 * muSq + 2 * sig1 * k / h^2) * (uVec(end-2)) ...
+            + (lambdaSq + 2 * muSq + 2 * sig1 * k / h^2) * (uVec(end)) ...
             - muSq * uVec(end-3) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(end-1) ...
             - 2 * sig1 * k / h^2 * (uPrevVec(end-2) + uPrevVec(end))) / (1+sig0 * k);
-    end
-    
-    if bc == "f"
-        uNextVec(1) = ((2 - 2 * lambdaSq - 6 * muSq - 4 * sig1 * k / h^2) * uVec(1)...
+        
+        
+        uNextVec(1) = ((2 - 2 * lambdaSq - 2 * muSq - 4 * sig1 * k / h^2) * uVec(1)...
             + (2 * lambdaSq + 4 * muSq + 4 * sig1 * k / h^2) * uVec(2) ...
             - 2 * muSq * uVec(3) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(1) ...
             - 4 * sig1 * k / h^2 * uPrevVec(2)) / (1+sig0 * k);
-        uNextVec(end) = ((2 - 2 * lambdaSq - 6 * muSq - 4 * sig1 * k / h^2) * uVec(end)...
+        
+        uNextVec(end) = ((2 - 2 * lambdaSq - 2 * muSq - 4 * sig1 * k / h^2) * uVec(end)...
             + (2 * lambdaSq + 4 * muSq + 4 * sig1 * k / h^2) * uVec(end-1) ...
             - 2 * muSq * uVec(end-2) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(end) ...
             - 4 * sig1 * k / h^2 * uPrevVec(end-1)) / (1+sig0 * k);
+        
+%         uNextVec(1) = ((2 - 2 * lambdaSq - 6 * muSq - 4 * sig1 * k / h^2) * uVec(1)...
+%             + (2 * lambdaSq + 4 * muSq + 4 * sig1 * k / h^2) * uVec(2) ...
+%             - 2 * muSq * uVec(3) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(1) ...
+%             - 4 * sig1 * k / h^2 * uPrevVec(2)) / (1+sig0 * k);
+%         uNextVec(end) = ((2 - 2 * lambdaSq - 6 * muSq - 4 * sig1 * k / h^2) * uVec(end)...
+%             + (2 * lambdaSq + 4 * muSq + 4 * sig1 * k / h^2) * uVec(end-1) ...
+%             - 2 * muSq * uVec(end-2) + (-1 + sig0 * k + 4 * sig1 * k / h^2) * uPrevVec(end) ...
+%             - 4 * sig1 * k / h^2 * uPrevVec(end-1)) / (1+sig0 * k);
     end
+    
     uNext = B / Amat * u + C / Amat * uPrev;
     % Update equation 
     out(n) = u(outLoc);
-    subplot(411)
+    subplot(421)
     hold off;
     if bc == "c"
         uPlot = [0; 0; u; 0; 0];
@@ -160,40 +197,48 @@ for n = 1:lengthSound
     plot(uVec)
     ylim([-1, 1])
     
-%     subplot(212)
-%     plot(uPlot - uVec)
+    subplot(422)
+    plot(uPlot - uVec)
     drawnow;
     
     
     % energy
     if bc == "f"
-        scaling = zeros(N+1, 1);
+        scaling = ones(N+1, 1);
         scaling(1) = 0.5;
         scaling(end) = 0.5;
         
-        subplot(3,1,3)
-        kinEnergy(n) = rho * A * h / 2 * sum(scaling .* (1/k * (uVec - uVecPrev)).^2);
-%         potEnergy(n) = T / (2 * h) * sum((uVec(2:end) - uVec(1:end-1)) .* (uVecPrev(2:end) - uVecPrev(1:end-1)));
-        potEnergy(n) = T / 2 * h * sum((Dxp * u) .* (Dxp * uPrev))...
-            + E * I * h / 2 * sum((DxxE * u) .* (DxxE * uPrev));
+        kinEnergy(n) = rho * A * h / 2 * sum(scaling .* (1/k * (u - uPrev)).^2);
+        potEnergy(n) = T / 2 * h * sum((1/h * (u(2:end) - u(1:end-1))) .* (1/h * (uPrev(2:end) - uPrev(1:end-1)))) ...
+            + E * I * h / 2 * sum((1/h^2 * (u(3:end) - 2 * u(2:end-1) + u(1:end-2))) ...
+             .* (1/h^2 * (uPrev(3:end) - 2 * uPrev(2:end-1) + uPrev(1:end-2))));
+         
+        totEnergy(n) = kinEnergy(n) + potEnergy(n);
 
-        hold off;
-        plot(kinEnergy(1:n))
-        hold on;
-        plot(potEnergy(1:n))
-        drawnow;
     elseif bc == "s"
         kinEnergy(n) = rho * A * h / 2 * sum((1/k * (u - uPrev)).^2);
-        potEnergy(n) = T / 2 * h * sum((Dxp * [0; u; 0]) .* (Dxp * [0; uPrev; 0]))...
-            + E * I * h / 2 * sum((DxxE * [0; u; 0]) .* (DxxE * [0; uPrev; 0]));
+        potEnergy(n) = T / 2 * h * sum((Dxp * [0; u; 0]) .* (Dxp * [0; uPrev; 0])) ...
+            + E * I * h / 2 * sum((1/h^2 * ([u(2:end); 0] - 2 * u + [0; u(1:end-1)])) ...
+             .* (1/h^2 * ([uPrev(2:end); 0] - 2 * uPrev + [0; uPrev(1:end-1)])));
+%         matForm = (DxxE * [0; u; 0]) .* (DxxE * [0; uPrev; 0]);
+%         vecForm = (1/h^2 * ([u(2:end); 0] - 2 * u + [0; u(1:end-1)])) ...
+%              .* (1/h^2 * ([uPrev(2:end); 0] - 2 * uPrev + [0; uPrev(1:end-1)]));
+         
+%         sum(matForm) - sum(vecForm)
         totEnergy(n) = kinEnergy(n) + potEnergy(n);
-        
         subplot(412)
+
         plot(kinEnergy(1:n))
 %         hold on;
-        subplot(413)
 
-        plot(potEnergy(1:n))
+        subplot(413)
+%         plot(totEnergy(1:n))
+                plot(potEnergy(1:n))
+
+%         hold off;
+%         plot(p1Test(1:n))
+%         hold on;
+%         plot(p2Test(1:n))
         
     elseif bc == "c"
         kinEnergy(n) = rho * A * h / 2 * sum((1/k * (u - uPrev)).^2);
