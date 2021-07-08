@@ -49,7 +49,7 @@ for n = 1:lengthSound
             hold off;
             plot((0:N) / N, u, 'k', 'Linewidth', 2);
             xlabel('$x$ (m)', 'interpreter', 'latex')
-            ylabel("$u$ (m)", 'interpreter', 'latex')
+            ylabel("$u(x,t)$", 'interpreter', 'latex')
 
         end
         ylim([-1, 1])

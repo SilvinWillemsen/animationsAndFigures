@@ -95,13 +95,13 @@ for i = 0:0.2:1
 end
 fontsize = 16;
 xNames = {'-$z_{ss}(v)$', '-$z_{ba}$', '$0$', '$z_{ba}$', '$z_{ss}(v)$'};
-text(locations, repmat(-0.12, 5, 1), xNames, 'horizontalAlignment', 'center', 'Fontsize', 18, 'interpreter', 'latex')
+text(locations, repmat(-0.13, 5, 1), xNames, 'horizontalAlignment', 'center', 'Fontsize', 18, 'interpreter', 'latex')
 % text(0, 0.85, '$|z|\leq z_{ba}$', 'interpreter', 'latex', 'Fontsize', fontsize, 'horizontalAlignment', 'center')
 % text((z_ba+zss(1)) / 2, 0.85, '$z_{ba}<|z|<|z_{ss}(v)|$', 'interpreter', 'latex', 'Fontsize', fontsize, 'horizontalAlignment', 'center', 'rotation', -90)
 % text((zss(1) + 1.5e-4) / 2, 0.85, '$|z|\geq|z_{ss}(v)|$', 'interpreter', 'latex', 'Fontsize', fontsize, 'horizontalAlignment', 'center')
 
 set(gca, 'Fontsize', 15, 'TickLabelInterpreter', 'latex')
-text(0, -0.175, '$z$','interpreter', 'latex', 'Fontsize', 20, 'horizontalAlignment', 'center')
+text(0, -0.195, '$z$','interpreter', 'latex', 'Fontsize', 20, 'horizontalAlignment', 'center')
 title('Plot for $\alpha(v,z)$ if sgn($v$) = sgn($z$)','interpreter', 'latex', 'Fontsize', 20)
 ylabel('$\alpha(v,z)$','interpreter', 'latex')
 plot(z, alphaVar, 'k', 'Linewidth', 2);

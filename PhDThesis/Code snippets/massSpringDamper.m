@@ -10,6 +10,7 @@ f0 = 440;               % fundamental frequency [Hz]
 omega0 = 2 * pi * f0;   % angular (fundamental) frequency [Hz]
 M = 1;                  % mass [kg]
 K = omega0^2 * M;       % spring constant [N/m]
+R = 100;
 
 %% initial conditions (u0 = 1, d/dt u0 = 0)
 u = 1;                  
@@ -18,18 +19,25 @@ uPrev = 1;
 % initialise output vector
 out = zeros(lengthSound, 1);
 
+qTot = 0;
 %% Simulation loop
 for n = 1:lengthSound
     
     % Update equation 
-    uNext = (2 - K * k^2 / M) * u - uPrev; 
+    uNext = ((2 - K * k^2 / M) * u - (1 - R * k / (2*M)) * uPrev) / (1 + R * k / (2*M)); 
     
     out(n) = u;
     
     kinEnergy(n) = M / 2 * (1/k * (u - uPrev))^2;
     potEnergy(n) = K / 2 * u * uPrev;
-    totEnergy(n) = kinEnergy(n) + potEnergy(n);
+    dampEnergy(n) = R *  (1/(2*k) * (uNext - uPrev))^2;
     
+    idx = n - (1 * (n~=1));
+    qTot = qTot + k * dampEnergy(idx);
+    totEnergy(n) = kinEnergy(n) + potEnergy(n) + qTot;
+    
+    plot(totEnergy(1:n) / totEnergy(1) - 1)
+    drawnow;
     % Update system states
     uPrev = u;
     u = uNext;
