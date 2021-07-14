@@ -32,8 +32,10 @@ view(30,16);
 
 coordsCur = [1 3; 2 2; 2 3; 2 4; 3 1; 3 2; 3 3; 3 4; 3 5;
             4 2; 4 3; 4 4; 5 3];
+coordsCur = [2 3; 3 2; 3 3; 3 4;
+            4 3;];
 
-coordsPrev = [2 3; 3 2; 3 3; 3 4; 4 3];
+coordsPrev = [3 3;];
 
 for i = 1:length(coordsCur(:,1))
     scatter3(coordsCur(i, 1), coordsCur(i, 2), 2, 100, ...
@@ -51,6 +53,6 @@ scatter3(3, 3, 3, 100,...
 'MarkerEdgeColor','k',...
 'MarkerFaceColor',[1, 1 ,0]);
 camproj('perspective')
-text(4.38991979746008, 0.601020069211444, 3.18889040789108, '$(1+\sigma_0k)$', 'FontSize', 18, 'interpreter','latex', 'horizontalAlignment', 'center')
+% text(4.38991979746008, 0.601020069211444, 3.18889040789108, '$(1+\sigma_0k)$', 'FontSize', 18, 'interpreter','latex', 'horizontalAlignment', 'center')
 
 set(gca, 'Position', [0.1 0.05 0.85 1], 'Projection', 'perspective')

@@ -73,7 +73,12 @@ potEnergy = zeros(lengthSound, 1);
 totEnergy = zeros(lengthSound, 1);
 
 fp = 1/(pi * k) * asin (c * k / 2 * sqrt(-eig(Dxx)));
-
+noDamping = true;
+Amat = I;
+B = (2 * I + c^2 * k^2 * Dxx);
+C = -I;
+N = N - 2;
+plotModalAnalysis;
 %% Simulation loop
 for n = 1:lengthSound
     

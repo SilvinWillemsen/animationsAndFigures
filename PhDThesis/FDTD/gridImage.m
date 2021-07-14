@@ -1,5 +1,9 @@
 clear all;
 close all;
+
+figwidth = 0.4;
+axisOff = true;
+
 fs = 8000;
 t = (1:fs)' + 543;
 y = sin(2 * pi * t / fs) + sin(3 * pi * t / fs) + sin(6.5 * pi * t / fs);
@@ -31,9 +35,8 @@ j = 0;
         
 subplot(1, 2, 1)
 
-set(gca, 'FontSize', 15, 'Color', 'white', 'Position', [0.02 0.10 0.45 0.8])
+set(gca, 'FontSize', 15, 'Color', 'white', 'Position', [0.02 0.10 figwidth 0.8])
 dist = 150;
-axisOff = true;
 
 for n = 1:loops
     uNext(3:N-2) = B * u(3:N-2) + C * uPrev(3:N-2);
@@ -70,7 +73,7 @@ for n = 1:loops
         if axisOff
             axis off;
         end
-        set(gca, 'FontSize', 15, 'Color', 'white', 'Position', [0.05, 1-0.15*(j+1), 0.45, 0.2])
+        set(gca, 'FontSize', 15, 'Color', 'white', 'Position', [0.05, 1-0.15*(j+1), figwidth, 0.2])
         xlim([0, 9000])
         ylim([-1, 5])
         drawnow;
@@ -84,7 +87,7 @@ for n = 1:loops
         if axisOff
             axis off;
         end
-        set(gca, 'FontSize', 15, 'Color', 'white', 'Position', [0.55, 1-0.15*j, 0.45, 0.2])
+        set(gca, 'FontSize', 15, 'Color', 'white', 'Position', [0.55, 1-0.15*j, figwidth, 0.2])
         xlim([0, 9000])
         ylim([-1, 5])
         drawnow;

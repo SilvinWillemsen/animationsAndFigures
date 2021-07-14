@@ -26,7 +26,7 @@ grid on
 % xlim([0.5 5.5])
 % ylim([0.5 5.5])
 
-timestep = "prev";
+timestep = "prev"; % cur or prev
 
 if timestep == "cur"
     coords = [1 3; 2 2; 2 3; 2 4; 3 1; 3 2; 3 3; 3 4; 3 5;
@@ -37,7 +37,7 @@ if timestep == "cur"
               "$-2\mu^2$"
               "$-\mu^2$"
               "$(8\mu^2 + S)$"
-              "$(2 - 2S + 20\mu^2)$"
+              "$(2 - 20\mu^2 - 4S)$"
               "$(8\mu^2 + S)$"
               "$-\mu^2$"
               "$-2\mu^2$"
@@ -48,7 +48,7 @@ else
     coords = [2 3; 3 2; 3 3; 3 4; 4 3];
     labels = {"$-S$"
               "$-S$"
-              "$(\sigma_0k - 1 + 2S)$"
+              "$(\sigma_0k - 1 + 4S)$"
               "$-S$"
               "$-S$"};
 end

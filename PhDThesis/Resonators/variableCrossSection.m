@@ -14,7 +14,7 @@ hold on;
 plot(x, -tube, 'k', 'Linewidth', 2)
 xlim([-0.05, 1.05])
 
-stepsize = 1/4;
+stepsize = 1/6;
 idxJump = length(x)-1 * stepsize
 l = 0;
 lLoc = 1 / (2*stepsize)
@@ -32,7 +32,7 @@ for xloc = 0:stepsize:1
         case 1 / stepsize 
             txt = "$\bar S_N$";
         otherwise
-            txt = "$\bar S$";
+            txt = "";
 
     end
     l = l + 1;
@@ -45,12 +45,17 @@ for xloc = stepsize/2:stepsize:1
     plot([xloc, xloc], [tube(round(xloc*(length(x)-1))+1), -tube(round(xloc*(length(x)-1))+1)], '--k', 'Linewidth', 1)
     
     switch (l)
+        case 0
+            txt = "$S_{1/2}$";
         case lLoc - 1
             txt = "$S_{l-1/2}$";
         case lLoc
             txt = "$S_{l+1/2}$";
+        case 1/stepsize - 1
+            txt = "$S_{N-1/2}$";
+
         otherwise
-            txt = "$S$";
+            txt = "";
     end
     
     l = l + 1;

@@ -7,7 +7,7 @@ drawSpeed = 1;
 %% Initialise variables
 fs = 44100;         % Sample rate [Hz]
 k = 1 / fs;         % Time step [s]
-lengthSound = fs;   % Length of the simulation (1 second) [samples]             
+lengthSound = 200;   % Length of the simulation (1 second) [samples]             
 % tSave = zeros(1001,1);
 % tSaveIdx = 1;
 % for tens = 1000:2000
@@ -17,13 +17,13 @@ L = 1;              % Length [m]
 r = 5e-4;           % Radius [m]
 A = pi * r^2;       % Cross-sectional area [m^2] (circular cross-section)
 rho = 7850;         % Material density [kg / m^3]
-E = 2e14;           % Young's modulus [Pa]
+E = 2e11;           % Young's modulus [Pa]
 I = pi * r^4 / 4;   % Area moment of inertia [m^4]
-T = 10325;            % Tension [N]
+T = 1000;            % Tension [N]
 
 % Damping coefficients
-sig0 = 0;         % Frequency-independent damping [s^{-1}]
-sig1 = 0.00;       % Frequency-dependent damping [m^2/s]
+sig0 = 1;         % Frequency-independent damping [s^{-1}]
+sig1 = 0.005;       % Frequency-dependent damping [m^2/s]
 
 % Scheme coefficients
 c = sqrt(T / (rho * A));            % Wave speed [m/s]
@@ -38,7 +38,6 @@ h = L / N;          % Recalculation of grid spacing based on integer N
 % Update coefficients
 lambdaSq = c^2 * k^2 / h^2;
 muSq = kappa^2 * k^2 / h^4;
- lambdaSq + 4 * muSq
 %     tSave(tSaveIdx) = lambdaSq + 4 * muSq;
 %     tSaveIdx = tSaveIdx + 1;
 % end
@@ -53,7 +52,7 @@ elseif bc == "s"
     N = N - 2;
 elseif bc == "f"
     N = N;
-end
+end 
     
 %% Initialise state vectors (one more grid point than the number of intervals)
 uNext = zeros(N+1, 1); 
@@ -82,8 +81,6 @@ Amat = (1 + sig0 * k);
 B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx + 2 * sig1 * k * Dxx;
 C = -(1 - sig0 * k) * Id - 2 * sig1 * k * Dxx;
 
-1/(pi*k) * asin(1/2 * sqrt(-eig(c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx)))
-
 %% Initial conditions (raised cosine)
 ratio = 0.3;
 loc = floor(ratio * N);       % Center location
@@ -92,7 +89,7 @@ width = 2 * halfWidth;      % Full width
 rcX = 0:width;              % x-locations for raised cosine
 
 rc = 0.5 - 0.5 * cos(2 * pi * rcX / width); % raised cosine
-u(loc-halfWidth : loc+halfWidth) = rc;
+u(loc-halfWidth : loc+halfWidth) = 1.1 * rc;
 
 % Set initial velocity to zero
 uPrev = u;
@@ -101,14 +98,32 @@ uPrev = u;
 outLoc = round(0.3 * N);
 
 %% Initialise matrices for energy
-Dxp = sparse(1:Norig+1, 1:Norig+1, -ones(1, Norig+1), Norig+1, Norig+1) + ...
-        sparse(1:Norig, 2:Norig+1, ones(1, Norig), Norig+1, Norig+1);
-Dxp = Dxp / h;
-
-DxxE = sparse(2:N+3, 1:N+2, ones(1, N+2), N+3, N+3) + ...
+if bc == 'c'
+    Dxp = sparse(1:Norig-2, 1:Norig-2, -ones(1, Norig-2), Norig-2, Norig-2) + ...
+            sparse(1:Norig-3, 2:Norig-2, ones(1, Norig-3), Norig-2, Norig-2);
+    DxxE = sparse(2:N+3, 1:N+2, ones(1, N+2), N+3, N+3) + ...
         sparse(1:N+3, 1:N+3, -2 * ones(1, N+3), N+3, N+3) + ... 
         sparse(1:N+2, 2:N+3, ones(1, N+2), N+3, N+3);
-DxxE = DxxE / h^2;
+    DxxE = DxxE / h^2;
+
+elseif bc == 's'
+    Dxp = sparse(1:Norig, 1:Norig, -ones(1, Norig), Norig, Norig) + ...
+            sparse(1:Norig-1, 2:Norig, ones(1, Norig-1), Norig, Norig);
+elseif bc == 'f'
+    Dxp = sparse(1:Norig+1, 1:Norig+1, -ones(1, Norig+1), Norig+1, Norig+1) + ...
+    sparse(1:Norig, 2:Norig+1, ones(1, Norig), Norig+1, Norig+1);
+    Dxp(end, :) = [];
+    
+    DxxE = sparse(2:N+1, 1:N, ones(1, N), N+1, N+1) + ...
+        sparse(1:N+1, 1:N+1, -2 * ones(1, N+1), N+1, N+1) + ... 
+        sparse(1:N, 2:N+1, ones(1, N), N+1, N+1);
+    DxxE(1, :) = [];
+    DxxE(end, :) = [];
+
+    DxxE = DxxE / h^2;
+end
+Dxp = Dxp / h;
+
 
 kinEnergy = zeros(lengthSound, 1); % kinetic energy
 potEnergy = zeros(lengthSound, 1); % potential energy
@@ -134,8 +149,9 @@ for n = 1:lengthSound
     if bc == "c"
         % energy in the system
         kinEnergy(n) = rho * A * h / 2 * sum((1/k * (u - uPrev)).^2);
-        potEnergy(n) = T / 2 * h * sum((Dxp * [0; 0; u; 0; 0]) .* (Dxp * [0; 0; uPrev; 0; 0]))...
-            + E * I * h / 2 * sum((DxxE * [0; u; 0]) .* (DxxE * [0; uPrev; 0]));
+        potEnergy(n) = T / 2 * h * sum((Dxp * [0; u]) .* (Dxp * [0; uPrev]))...
+                        + E * I * h / 2 * sum((DxxE * [0; u; 0]) .* (DxxE * [0; uPrev; 0]));
+%             + E * I * h / 2 * sum((Dxx * u) .* (Dxx * uPrev));
 
         % damping
         q0(n) = 2 * sig0 * rho * A * h * sum((1/(2*k) * (uNext - uPrev)).^2);
@@ -150,14 +166,13 @@ for n = 1:lengthSound
     elseif bc == "s"
         % energy in the system
         kinEnergy(n) = rho * A * h / 2 * sum((1/k * (u - uPrev)).^2);
-        potEnergy(n) = T / 2 * h * sum((Dxp * [0; u; 0]) .* (Dxp * [0; uPrev; 0])) ...
-            + E * I * h / 2 * sum((1/h^2 * ([u(2:end); 0] - 2 * u + [0; u(1:end-1)])) ...
-             .* (1/h^2 * ([uPrev(2:end); 0] - 2 * uPrev + [0; uPrev(1:end-1)])));
-
+        potEnergy(n) = T / 2 * h * sum((Dxp * [0; u]) .* (Dxp * [0; uPrev])) ...
+            + E * I * h / 2 * sum((Dxx * u) .* (Dxx * uPrev));
+        
         % damping
         q0(n) = 2 * sig0 * rho * A * h * sum((1/(2*k) * (uNext - uPrev)).^2);
-        q1(n) = - 2 * sig1 * rho * A * h * sum(1/(2*k) * ([0; uNext; 0] - [0; uPrev; 0])...
-            .* (1/k * (DxxE * [0; u; 0] - DxxE * [0; uPrev; 0])));
+        q1(n) = - 2 * sig1 * rho * A * h * sum(1/(2*k) * (uNext - uPrev)...
+            .* (1/k * (Dxx * u - Dxx * uPrev)));
         idx = n - (1 * (n~=1));
         qTot = qTot + k * (q0(idx) + q1(idx));
 
@@ -171,9 +186,8 @@ for n = 1:lengthSound
         scaling(end) = 0.5;
 
         kinEnergy(n) = rho * A * h / 2 * sum(scaling .* (1/k * (u - uPrev)).^2);
-        potEnergy(n) = T / 2 * h * sum((1/h * (u(2:end) - u(1:end-1))) .* (1/h * (uPrev(2:end) - uPrev(1:end-1)))) ...
-            + E * I * h / 2 * sum((1/h^2 * (u(3:end) - 2 * u(2:end-1) + u(1:end-2))) ...
-             .* (1/h^2 * (uPrev(3:end) - 2 * uPrev(2:end-1) + uPrev(1:end-2))));
+        potEnergy(n) = T / 2 * h * sum((Dxp * u) .* (Dxp * uPrev)) ...
+            + E * I * h / 2 * sum((DxxE * u) .* (DxxE * uPrev));
 
         % damping
         q0(n) = 2 * sig0 * rho * A * h * sum(scaling .* (1/(2*k) * (uNext - uPrev)).^2);
@@ -187,36 +201,36 @@ for n = 1:lengthSound
     
     %% plot stuff
     if drawThings && mod(n, drawSpeed) == 0
-        if drawEnergy
-            subplot(311)
-        end
-        if n == 1 || n == 41 || n == 81
-            if bc == "c"
-                uPlot = [0; 0; u; 0; 0];
-            elseif bc == "s"
-                uPlot = [0; u; 0];
-            elseif bc == "f"
-                uPlot = u;
-            end
-    %         hold off;
-            plot((0:Norig) / Norig, uPlot, 'k', 'Linewidth', 1.5)
-            xticks([0 1])
-            xticklabels({'$0$','$L$'})
-            ylim([-1.1, 1.1])
-            xLab = xlabel('$x$', 'interpreter', 'latex', 'Fontsize', 16);
-            xLab.Position(2) = -1.25;
-            yLab = ylabel('$u$', 'interpreter', 'latex', 'Fontsize', 16);
-            yLab.Position(1) = -0.05;
-            set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', ...
-                'Position', [0.1036 0.1396 0.8750 0.8306], 'Linewidth', 2)
-
-            pause
-        end
+%         if drawEnergy
+%             subplot(311)
+%         end
+%         if n == 1 || n == 41 || n == 81
+%             if bc == "c"
+%                 uPlot = [0; 0; u; 0; 0];
+%             elseif bc == "s"
+%                 uPlot = [0; u; 0];
+%             elseif bc == "f"
+%                 uPlot = u;
+%             end
+%     %         hold off;
+%             plot((0:Norig) / Norig, uPlot, 'k', 'Linewidth', 1.5)
+%             xticks([0 1])
+%             xticklabels({'$0$','$L$'})
+%             ylim([-1.1, 1.1])
+%             xLab = xlabel('$x$', 'interpreter', 'latex', 'Fontsize', 16);
+%             xLab.Position(2) = -1.25;
+%             yLab = ylabel('$u$', 'interpreter', 'latex', 'Fontsize', 16);
+%             yLab.Position(1) = -0.05;
+%             set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', ...
+%                 'Position', [0.1036 0.1396 0.8750 0.8306], 'Linewidth', 2)
+% 
+%             pause
+%         end
         
         if drawEnergy
-            subplot(312)
-            plot(uPlot - uVec)
-            subplot(313)
+%             subplot(312)
+%             plot(uPlot - uVec)
+%             subplot(313)
             plot(totEnergy(1:n) / totEnergy(1) - 1)         
             drawnow;
         end
