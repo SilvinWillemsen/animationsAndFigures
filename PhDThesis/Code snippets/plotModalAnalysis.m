@@ -12,6 +12,9 @@ else
     figure('Position', [173 578 435 220]);
     plot1Pos = [0.1172 0.2091 0.8621 0.6909];
 end
+if ~exist('firstPlot','var')
+    firstPlot = true;
+end
 %     color = 'b'
 % else
 %     color = 'r'
@@ -32,7 +35,7 @@ s = s(order);
 if ~noDamping
     subplot(121)
 end
-if ~exist('firstPlot','var') || firstPlot
+if firstPlot
     plot(0, 0)
 end
 hold on

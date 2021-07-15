@@ -111,12 +111,12 @@ Amat = speye(N+1);
 Amat(end, end) = (1 + alfPlus);
 C = -speye(N+1);
 C(end, end) = -1 + alfMinus;
-% 
-% plotDampingAgainstFrequency = true;
-% plotModalAnalysis;
-% figure
-% scatter(1:length(s)-1, (imag(s(2:end))-imag(s(1:end-1)))/(2*pi))
-% drawnow
+
+plotDampingAgainstFrequency = true;
+plotModalAnalysis;
+figure
+scatter(1:length(s)-1, (imag(s(2:end))-imag(s(1:end-1)))/(2*pi))
+drawnow
 for n = 1:lengthSound
     
     vIn = 2 * h * lambdaSq * Smh / SBar(1) * in(n);

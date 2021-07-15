@@ -62,10 +62,7 @@ for xloc = stepsize/2:stepsize:1
 
     text(xloc + 0.005, 0, txt, 'interpreter', 'latex', 'Fontsize', 16)
 end
-offset = 0.075
-plot([2*stepsize, 3*stepsize], [1.5, 1.5], 'k', 'Linewidth', 1.5)
-plot([2*stepsize, 2*stepsize], [1.5+offset, 1.5-offset], 'k', 'Linewidth', 1.5)
-plot([3*stepsize, 3*stepsize], [1.5+offset, 1.5-offset], 'k', 'Linewidth', 1.5)
-text(2.5*stepsize, 1.7, '$h$', 'interpreter', 'latex', 'horizontalAlignment', 'center', 'Fontsize', 18)
+plot([2*stepsize, 3*stepsize], [1.5, 1.5], 'k' 
+)
 axis off
 set(gca, 'Position', [0 0 1 1])
