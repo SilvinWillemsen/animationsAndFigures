@@ -32,7 +32,7 @@ NnonExtended = LnonExtended / h;
 a1 = 1 / (4 * (0.8216)^2 * c);              % loss term
 a2 = L / (0.8216 * sqrt(S(1)*S(N+1)/pi));     % inertia coefficient
 % a1 = 0;
-% a2 = 0
+% a2 = 0;
 %Initialise states
 uNext = zeros(N+1, 1);
 u = zeros(N+1, 1);
@@ -87,7 +87,7 @@ title("Normalised energy (should be within machine precision)")
 
 % Problem 9.5 (weighted boundary conditions)
 epsilonL = SHalf(1)/SBar(1);
-epsilonR = SHalf(end)/SBar(end);
+epsilonR = SHalf(end)/SBar(end)
 
 scaling = ones(N+1,1);
 scaling(1) = epsilonL / 2;
@@ -343,14 +343,14 @@ function [S, SHalf, SBar] = setTube(N, NnonExtended, setToOnes)
 %     addPointsAt = N - addPointsAt;
     if setToOnes
 %         S = exp((-N-1:0)'/(0.5*N))/2;
-%         S = 0.5-0.5 *cos(0.5*pi:0.5*pi/(N-1):1.5*pi)';
+        S = 0.5-0.5 *cos(0.5*pi:pi/(N-1):1.5*pi)';
 %         S = rand(size(S)) * 0.5 + 1;
-        S = ones(size(S));
+%         S = ones(size(S));
 
     end
     
     % Calculate approximations to the geometry
-    SHalf = (S(1:N-1) + S(2:N)) * 0.5;                  % mu_{x+}
+    SHalf = (S(1:end-1) + S(2:end)) * 0.5;                  % mu_{x+}
     SBar = (SHalf(1:end-1) + SHalf(2:end)) * 0.5;
     SBar = [S(1); SBar; S(end)];                        % mu_{x-}S_{l+1/2}
 end

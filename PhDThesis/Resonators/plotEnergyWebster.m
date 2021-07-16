@@ -1,6 +1,6 @@
 figure('Position', [173 578 827 220])
 
-energyRangeEnd = 101;
+energyRangeEnd = 301;
 
 subp1 = subplot(1, 2, 1)
 kin = plot(0:energyRangeEnd-1, kinEnergy(1:energyRangeEnd), 'b', 'Linewidth' , 1.5);
