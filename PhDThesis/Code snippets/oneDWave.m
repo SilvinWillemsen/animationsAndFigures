@@ -1,4 +1,4 @@
-% close all;
+close all;
 clear all;
 
 %% Initialise variables
@@ -8,7 +8,7 @@ lengthSound = fs;   % Length of the simulation (1 second) [samples]
 
 rho = 7850;
 A = pi * 0.0005^2;
-c = 1470;            % Wave speed [m/s]
+c = 735;            % Wave speed [m/s]
 T = c^2 * rho * A; 
 
 L = 1;              % Length [m]
@@ -41,7 +41,7 @@ u = zeros(Nu+1, 1);
 
 %% Initial conditions (raised cosine)
 if bc == "D"
-    loc = round(0.2 * N);       % Center location (is correct as boundaries are excluded)
+    loc = round(0.5 * N);       % Center location (is correct as boundaries are excluded)
 elseif bc == "N"
     loc = round(0.5 * N) + 1;   % Center location + 1 (1-based matlab) (doesn't dampen the same modes due to different modal shapes)
 end
@@ -53,11 +53,14 @@ rcX = 0:width;              % x-locations for raised cosine
 rc = 0.5 - 0.5 * cos(2 * pi * rcX / width); % raised cosine
 u(loc-halfWidth : loc+halfWidth) = rc; % initialise current state  
 uVec(loc-halfWidth : loc+halfWidth) = rc;
+% u(loc) = 1;
+% uVec(loc) = 1;
 
 % Set initial velocity to zero
-uPrev = u;
-uPrevVec = uVec;
-
+% uPrev = u;
+% uPrevVec = uVec;
+uPrev = zeros(size(u));
+uPrevVec = zeros(size(uVec));
 % Output location and scaling of boundary points for energy
 if bc == "D"
     outLoc = round(0.1 * (N-1));
@@ -78,7 +81,9 @@ Amat = I;
 B = (2 * I + c^2 * k^2 * Dxx);
 C = -I;
 N = N - 2;
-plotModalAnalysis;
+% plotModalAnalysis;
+figure('Position', [440 576 357 222])
+
 %% Simulation loop
 for n = 1:lengthSound
     
@@ -98,7 +103,26 @@ for n = 1:lengthSound
     totEnergy(n) = kinEnergy(n) + potEnergy(n);
     
     out(n) = u(outLoc);
+    
+    if n == 1 || n == 5 || n == 9
+        plot((0:Nu+2) / (Nu+2), [0;u;0], 'k', 'Linewidth', 1.5)
+        xticks([0 1])
+        xticklabels({'$0$','$N$'})
+    %         ylim([-1.1, 1.1])
+        xLab = xlabel('$l$', 'interpreter', 'latex', 'Fontsize', 16);
+        ylim([-3, 3])
+        xLim = xlim;
+        yLim = ylim;
+        xLab.Position(2) = yLim(1) - 0.05 * (yLim(2) - yLim(1));
+        yLab = ylabel('$u_l^n$', 'interpreter', 'latex', 'Fontsize', 16);
+        yLab.Position(1) = -0.05;
 
+        set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', ...
+            'Position', [0.1036 0.1396 0.8750 0.8306], 'Linewidth', 2)
+
+        drawnow;
+
+    end
     % Update system states
     uPrev = u;
     u = uNext;

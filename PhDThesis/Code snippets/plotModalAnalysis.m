@@ -1,29 +1,35 @@
-% if firstPlot
+if ~exist('firstPlot','var')
+    firstPlot = true;
+end
 if ~exist('plotDampingAgainstFrequency','var')
     plotDampingAgainstFrequency = false;
 end
 if ~exist('noDamping','var')
     noDamping = false;
 end
+if ~exist('QisGiven','var')
+    QisGiven = false;
+end
 if ~noDamping
-    figure('Position', [173 578 827 220])
+    if firstPlot
+        figure('Position', [173 578 827 220]) 
+    end
     plot1Pos = [0.0632 0.2091 0.4115 0.6909];
 else
-    figure('Position', [173 578 435 220]);
+    if firstPlot
+        figure('Position', [173 578 435 220]);
+    end
+
     plot1Pos = [0.1172 0.2091 0.8621 0.6909];
 end
-if ~exist('firstPlot','var')
-    firstPlot = true;
-end
-%     color = 'b'
-% else
-%     color = 'r'
-% end
+
+
 color = 'k';
 % create Q matrix (one-step form)
-Q = [Amat \ B, Amat \ C;
-     speye(N+1), sparse(zeros(N+1))];
- 
+if ~QisGiven
+    Q = [Amat \ B, Amat \ C;
+         speye(N+1), sparse(zeros(N+1))];
+end
 % obtain complex frequencies
 s = 1/k * log(eig(full(Q)));
 
@@ -50,6 +56,11 @@ set(gca, 'Fontsize', 16, 'Linewidth', 2, 'FontName', 'times', ...
     
 if ~noDamping
     subplot(122)
+    if firstPlot
+        color = 'b';
+    else
+        color = 'r';
+    end
     if firstPlot
         plot(0, 0)
     end

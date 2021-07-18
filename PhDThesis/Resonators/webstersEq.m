@@ -3,19 +3,25 @@
 %}
 
 clear all;
-close all;
+% close all;
+
+plotHighLosses = false; % for energyfigure
 
 % drawing variables
-drawThings = false;
+drawThings = true;
 drawSpeed = 1;
 
-impulse = false;
-
+impulse = true;
+impulseTest = false;
 fs = 44100;         % Sample rate (Hz)
 k = 1/fs;           % Time step (s)
 lengthSound = fs; % Duration (s)
 
-L = 3;              % Length
+if plotHighLosses
+    L = 1;              % Length
+else
+    L = 3;
+end
 c = 343;            % Wave speed (m/s)
 h = c * k;          % Grid spacing (m)
 
@@ -27,9 +33,10 @@ lambdaSq = (c * k / h)^2    % Courant number
 % Set cross-sectional geometry
 LnonExtended = 2.593;
 NnonExtended = LnonExtended / h;
-[S, SHalf, SBar] = setTube (N+1, NnonExtended, false);
+[S, SHalf, SBar] = setTromboneTube (N+1, NnonExtended, plotHighLosses);
+% [S, SHalf, SBar] = setTube (N+1);
 
-a1 = 1 / (4 * (0.8216)^2 * c);              % loss term
+a1 = 1 / (2 * (0.8216)^2 * c);              % loss term
 a2 = L / (0.8216 * sqrt(S(1)*S(N+1)/pi));     % inertia coefficient
 % a1 = 0;
 % a2 = 0;
@@ -37,8 +44,8 @@ a2 = L / (0.8216 * sqrt(S(1)*S(N+1)/pi));     % inertia coefficient
 uNext = zeros(N+1, 1);
 u = zeros(N+1, 1);
 % a2 = 0
-amp = 10000;
-if ~impulse  
+amp = 0.5;
+if ~impulse  && ~impulseTest
     % input signal
     t = (0:lengthSound - 1) / fs;
     freq = 213;
@@ -49,12 +56,18 @@ if ~impulse
     in = in * amp;
     rampLength = 1000; 
     env = [linspace(0, 1, rampLength), ones(1, lengthSound - rampLength)];
-    in = in .* env;
+%     in = in .* env;
 %     in = in - sum(in) / length(in);
+    
+elseif impulseTest
+    in = zeros(lengthSound, 1);
+    inWidth = 100
+    in (1:inWidth) = amp * sin(2 * pi * fs / inWidth * (0:inWidth-1) / fs);
+
 else
     in = zeros(lengthSound, 1);
-    u(floor(N / 3) - 4 : floor(N / 3) + 4) = amp*hann(9);
-%     u(1) = 1;
+%     u(floor(N / 2) - 4 : floor(N / 2) + 4) = amp*hann(9);
+    u(1) = 1;
 end
 uPrev = u;
 
@@ -73,17 +86,7 @@ range = 2:N;          % range without boundaries
 potEnergyRange = 1:N; % range for the potential energy
 
 % set up figure
-figure(1);
-subplot(2,1,1)
-plot(sqrt(S), 'k');
-hold on;
-plot(-sqrt(S), 'k');
-xlim([1 N+1]);
-ylim([-max(sqrt(S)) max(sqrt(S))] * 1.1);
-title("Pressure potential")
-
-subplot(2,1,2)
-title("Normalised energy (should be within machine precision)") 
+% figure(1);title("Pressure potential")
 
 % Problem 9.5 (weighted boundary conditions)
 epsilonL = SHalf(1)/SBar(1);
@@ -112,11 +115,14 @@ Amat(end, end) = (1 + alfPlus);
 C = -speye(N+1);
 C(end, end) = -1 + alfMinus;
 % 
-% plotDampingAgainstFrequency = true;
-% plotModalAnalysis;
-% figure
-% scatter(1:length(s)-1, (imag(s(2:end))-imag(s(1:end-1)))/(2*pi))
-% drawnow
+plotDampingAgainstFrequency = true;
+firstPlot = true;
+plotModalAnalysis;
+figure
+scatter(1:length(s)-1, (imag(s(2:end))-imag(s(1:end-1)))/(2*pi))
+ylim([0, 100])
+drawnow
+figure('Position', [440 558 367 240])
 for n = 1:lengthSound
     
     vIn = 2 * h * lambdaSq * Smh / SBar(1) * in(n);
@@ -151,41 +157,75 @@ for n = 1:lengthSound
     
     % draw things
     if drawThings && mod (n, drawSpeed) == 0
-        
-        % plot state
-        subplot(3,1,1)
-        cla
-        hold on;
-        plot (uNext * 1/amp);
-        plot(sqrt(S) * amp, 'k');
-        plot(-sqrt(S) * amp, 'k');
-        xlim([1 N+1]);
-%         ylim([-max(sqrt(S)) max(sqrt(S))] * amp * 1.1);
-        title("Pressure potential. n = " + num2str(n))
+        if n == 44 || n == 220 || n == 353
+            % plot state
+    %         subplot(3,1,1)
+%             hold off
+%             plot(uNext* 0.5, 'k', 'Linewidth', 1.5)
+            presPotScaling = 2;
+            fontSz = 20;
+            cla
+            plot(0,0)
+            hold on;
+            plotPressurePotential (3 * u / amp, presPotScaling * sqrt(S/pi));
+%             hold on;
+%             xlim([1 N+1]);
+    %         ylim([-max(sqrt(S)) max(sqrt(S))] * amp * 1.1);
+%             title("Pressure potential. n = " + num2str(n))
+            plot(presPotScaling * sqrt(S / pi), 'color', [0.5, 0.5, 0.5], 'Linewidth', 2);
+            plot(-presPotScaling * sqrt(S / pi), 'color', [0.5, 0.5, 0.5], 'Linewidth', 2);
+            plot(u*0.5, 'k', 'Linewidth', 1.5)
 
-        % plot total energy
-        subplot(3,1,2)
-        plot(uVec - u)
-        
-%         if n > 10
-%             if impulse% && a1 == 0
-%                 plot(totEnergy(10:n) / totEnergy(10) - 1);
-%                 title("Normalised energy (should be within machine precision)") 
-%             else
-%                 plot(totEnergy(10:n))
-%                 title("Total energy") 
-%             end
-%         end
-        
-        subplot(3,1,3)
-        hold off
-        plot(kinEnergy(1:n))
-        hold on;
-        plot(potEnergy(1:n))
-        plot(boundaryEnergy(1:n))
+            xticks([0,N+2])
+            xticklabels({'$0$','$L$'})
+            ylim(4.5*[-max(sqrt(S / pi)), max(sqrt(S / pi))])
+            xlim([0,N+2])
+            xLab = xlabel('$x$', 'interpreter', 'latex', 'Fontsize', fontSz);
+            yLim = ylim;
+            yticks([])
+%             yticks([-presPotScaling * sqrt(S(1) / pi), presPotScaling * sqrt(S(1) / pi)])
+%             yTickLabels = {'${\color{red}-\sqrt{S}}$','$\sqrt{S}$'};
+%             set(gca, 'YTickLabel', yTickLabels);
+            test = annotation('textbox', [0, 0.42, 0, 0], ...
+                'string', '$-\sqrt{S}$', 'interpreter', 'latex', ...
+                'Fontsize', 16);
+            test.Color = [0.5, 0.5, 0.5];
+            test2 = annotation('textbox', [0.03, 0.78, 0, 0], ...
+                'string', '$\sqrt{S}$', 'interpreter', 'latex', ...
+                'Fontsize', 16);
+            test2.Color = [0.5, 0.5, 0.5];
+            xLab.Position(2) = yLim(1) - (yLim(2) - yLim(1)) * 0.05;
+            yLab = ylabel('$\Psi$', 'interpreter', 'latex', 'Fontsize', fontSz, 'rotation', 90);
+            set(yLab,'rotation',0, 'verticalAlignment', 'middle')
+            xLim = xlim;
+            yLab.Position(1) = xLim(1) - (xLim(2) - xLim(1)) * 0.05;
+            
+            set(gca, 'Fontsize', fontSz, 'tickLabelInterpreter', 'latex', ...
+                'Position', [0.1362 0.1396 0.8424 0.8306], 'Linewidth', 2)
+            
+            
+    %         % plot total energy
+    %         subplot(3,1,2)
+    %         
+    % %         if n > 10
+    % %             if impulse% && a1 == 0
+    % %                 plot(totEnergy(10:n) / totEnergy(10) - 1);
+    % %                 title("Normalised energy (should be within machine precision)") 
+    % %             else
+    % %                 plot(totEnergy(10:n))
+    % %                 title("Total energy") 
+    % %             end
+    % %         end
+    %         
+    %         subplot(3,1,3)
+    %         hold off
+    %         plot(kinEnergy(1:n))
+    %         hold on;
+    %         plot(potEnergy(1:n))
+    %         plot(boundaryEnergy(1:n))
 
-        title("Rate-of-change of energy (should be very close to 0)");
-        drawnow;
+            drawnow;
+        end
     end
    
     % update states    
@@ -210,7 +250,7 @@ xLab = xlabel("$n$", 'interpreter', 'latex');
 yLab = ylabel("$u^n_N$", 'interpreter', 'latex');
 
 yLim = ylim;
-ylim([yLim * 1.1])
+ylim([yLim * 1.1]);
 yLim = yLim;
 
 xLab.Position(2) = yLim(1) - (yLim(2) - yLim(1)) * 0.18;
@@ -255,9 +295,9 @@ hold on;
 plot(-sqrt(S/pi), 'k', 'Linewidth', 2)
 xlim([1, N+1])
 ylabel("Cross-section [m]", 'Fontname', 'times')
-xLab = xlabel("$x$ [m]", 'interpreter', 'latex')
+xLab = xlabel("$x$ [m]", 'interpreter', 'latex');
 yLim = ylim;
-ylim([yLim * 1.1])
+ylim([yLim * 1.1]);
 yLim = yLim;
 
 xLab.Position(2) = yLim(1) - (yLim(2) - yLim(1)) * 0.12;
@@ -291,7 +331,12 @@ set(gcf, 'color', 'w')
     
 % figure
 % plot(abs(fft(out)))
-% function [S, SHalf, SBar] = setTube(N)
+function [S, SHalf, SBar] = setTube(N)
+    S = 0.001 * ones(N,1);
+    width = 9;
+    start = floor(N/2) - width - 1
+    S(start:start+width-1) = S(start:start+width-1)+0.00075 * hann(width);
+%     S(start:start+width-1) = zeros(width,1);
 %     mp = linspace(0.0005, 0.0005, floor(N/20));       % mouthpiece
 %     m2t = linspace(0.0005, 0.0001, floor(N/20));     % mouthpiece to tube
 %     alpha = 0.25;
@@ -300,55 +345,59 @@ set(gcf, 'color', 'w')
 %     tube = linspace(m2t(end), m2t(end), pointsLeft);        % tube
 % 
 %     S = [mp, m2t, tube, b]';                        % True geometry
-%     S = 0.001 * ones(length(S), 1);
-%     % Calculate approximations to the geometry
-%     SHalf = (S(1:N-1) + S(2:N)) * 0.5;           	% mu_{x+}
-%     SBar = (SHalf(1:end-1) + SHalf(2:end)) * 0.5;
-%     SBar = [S(1); SBar; S(end)];                    % mu_{x-}S_{l+1/2}
-% 
-% end
+% %     S = 0.001 * ones(length(S), 1);
+    % Calculate approximations to the geometry
+    SHalf = (S(1:N-1) + S(2:N)) * 0.5;           	% mu_{x+}
+    SBar = (SHalf(1:end-1) + SHalf(2:end)) * 0.5;
+    SBar = [S(1); SBar; S(end)];                    % mu_{x-}S_{l+1/2}
 
-function [S, SHalf, SBar] = setTube(N, NnonExtended, setToOnes)
+end
 
-    lengths = [0.708, 0.177, 0.711, 0.241, 0.254, 0.502];
-    radii = [0.0069, 0.0072, 0.0069, 0.0071, 0.0075, 0.0107]; % two radii for tuning slide
+function [S, SHalf, SBar] = setTromboneTube(N, NnonExtended, setToOnes)
 
-    lengthN = round(NnonExtended * lengths ./ sum(lengths));
-    addPointsAt = round(lengthN(1) + lengthN(2) * 0.5) + (N-NnonExtended) * 0.5; % indicate split of two connected schemes (including offset if N differs from NnonExtended
+    if N < NnonExtended
+        S = 0.01 * ones(N,1);
+        disp("N < NnonExtended")
+    else
+        lengths = [0.708, 0.177, 0.711, 0.241, 0.254, 0.502];
+        radii = [0.0069, 0.0072, 0.0069, 0.0071, 0.0075, 0.0107]; % two radii for tuning slide
 
-    mouthPiece = 0.013 * (0.45 * (1 + cos(pi * ((1:lengthN(1))'-1) / (lengthN(1)-1))) + 0.1);
-    inner1 = ones(lengthN(1), 1) * radii(1);
-    inner2 = ones(lengthN(3), 1) * radii(3);
-    gooseneck = ones(lengthN(4), 1) * radii(4);
-    tuning = linspace(radii(5), radii(6), lengthN(5))';
+        lengthN = round(NnonExtended * lengths ./ sum(lengths));
+        addPointsAt = round(lengthN(1) + lengthN(2) * 0.5) + (N-NnonExtended) * 0.5; % indicate split of two connected schemes (including offset if N differs from NnonExtended
 
-    x0 = 0.0174; 
-    b = 0.0063;
-    flare = 0.7;
-    bellL = lengthN(end);
+        mouthPiece = 0.013 * (0.45 * (1 + cos(pi * ((1:lengthN(1))'-1) / (lengthN(1)-1))) + 0.1);
+        inner1 = ones(lengthN(1), 1) * radii(1);
+        inner2 = ones(lengthN(3), 1) * radii(3);
+        gooseneck = ones(lengthN(4), 1) * radii(4);
+        tuning = linspace(radii(5), radii(6), lengthN(5))';
 
-    bell = b * ((lengths(6):-lengths(6) / (bellL - 1):0) + x0).^(-flare);
+        x0 = 0.0174; 
+        b = 0.0063;
+        flare = 0.7;
+        bellL = lengthN(end);
+
+        bell = b * ((lengths(6):-lengths(6) / (bellL - 1):0) + x0).^(-flare);
 
 
-%     pointsLeft = N - length([mp, m2t, bell]);
-%     tube = linspace(m2t(end), m2t(end), pointsLeft);    % tube
-    totLengthN = length(inner1) + length(inner2) + length(gooseneck) + length(tuning) + length(bell);
-%     lengthN(2) = lengthN(2) + (N - NnonExtended + 1);
-    slide = ones(N - totLengthN, 1) * radii(2);
-    totRadii = [inner1; slide; inner2; gooseneck; tuning; bell'];
+    %     pointsLeft = N - length([mp, m2t, bell]);
+    %     tube = linspace(m2t(end), m2t(end), pointsLeft);    % tube
+        totLengthN = length(inner1) + length(inner2) + length(gooseneck) + length(tuning) + length(bell);
+    %     lengthN(2) = lengthN(2) + (N - NnonExtended + 1);
+        slide = ones(N - totLengthN, 1) * radii(2);
+        totRadii = [inner1; slide; inner2; gooseneck; tuning; bell'];
 
-    % True geometry
-    S = totRadii.^2 * pi;
-%     S = flipud(S);
-%     addPointsAt = N - addPointsAt;
-    if setToOnes
-%         S = exp((-N-1:0)'/(0.5*N))/2;
-        S = 0.5-0.5 *cos(0.5*pi:pi/(N-1):1.5*pi)';
-%         S = rand(size(S)) * 0.5 + 1;
-%         S = ones(size(S));
+        % True geometry
+        S = totRadii.^2 * pi;
+    %     S = flipud(S);
+    %     addPointsAt = N - addPointsAt;
+        if setToOnes
+    %         S = exp((-N-1:0)'/(0.5*N))/2;
+    %         S = 0.5-0.5 *cos(0.5*pi:pi/(N-1):1.5*pi)';
+    %         S = rand(size(S)) * 0.5 + 1;
+            S = 0.001 * ones(size(S));
 
+        end
     end
-    
     % Calculate approximations to the geometry
     SHalf = (S(1:end-1) + S(2:end)) * 0.5;                  % mu_{x+}
     SBar = (SHalf(1:end-1) + SHalf(2:end)) * 0.5;

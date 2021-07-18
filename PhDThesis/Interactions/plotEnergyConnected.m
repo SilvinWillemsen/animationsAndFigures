@@ -1,21 +1,12 @@
 figure('Position', [173 578 827 220])
-if ~exist('noBoundaryEnergy', 'var')
-    noBoundaryEnergy = true;
-end
+
 energyRangeEnd = 101;
 
 subp1 = subplot(1, 2, 1)
-kin = plot(0:energyRangeEnd-1, kinEnergy(1:energyRangeEnd), 'b', 'Linewidth' , 1.5);
+uEnergy = plot(0:energyRangeEnd-1, totEnergyU(1:energyRangeEnd), 'r', 'Linewidth' , 1.5);
 hold on;
-pot = plot(0:energyRangeEnd-1, potEnergy(1:energyRangeEnd), 'r', 'Linewidth', 1.5);
-str = '#00DB00';
-if ~noBoundaryEnergy
-    color = sscanf(str(2:end),'%2x%2x%2x',[1 3])/255;
-    bound = plot(0:energyRangeEnd-1, boundaryEnergy(1:energyRangeEnd), 'color', color, 'Linewidth', 1.5);
-end
-tot = plot(0:energyRangeEnd-1, kinEnergy(1:energyRangeEnd) ...
-    + potEnergy(1:energyRangeEnd) ...
-    + boundaryEnergy(1:energyRangeEnd), 'k', 'Linewidth' , 1.5);
+wEnergy = plot(0:energyRangeEnd-1, totEnergyW(1:energyRangeEnd), 'b', 'Linewidth', 1.5);
+tot = plot(0:energyRangeEnd-1, totEnergyU(1:energyRangeEnd) + totEnergyW(1:energyRangeEnd), 'k', 'Linewidth' , 1.5);
 
 yLim = ylim;
 ylim([yLim(1), yLim(2)*1.05])

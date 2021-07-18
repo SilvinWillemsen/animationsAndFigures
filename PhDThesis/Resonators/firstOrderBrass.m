@@ -6,8 +6,8 @@ clear all;
 close all;
 
 % drawing variables
-drawThings = false;
-drawSpeed = 1;
+drawThings = true;
+drawSpeed = 10;
 centered = true;
 
 fs = 44100;             % Sample rate (Hz)
@@ -17,12 +17,13 @@ lengthSound = 500;   % Duration (s)
 %% viscothermal effects
 T = 26.85;
 [c, rho, eta, nu, gamma] = calcThermoDynConstants (T);
-
+% c = 343;
 %% Tube variables
 h = c * k;              % Grid spacing (m)
 L = 3;                  % Length
 
 N = floor(L/h);         % Number of points (-)
+L = N * h;
 h = L/N;                % Recalculate gridspacing from number of points
 
 lambda = c * k / h      % courant number
@@ -60,7 +61,7 @@ v = zeros(N-1, 1);
 amp = 10000;                 % input pressure (Pa)
 
 in = zeros(lengthSound, 1);
-p(floor(N / 3) - 4 : floor(N / 3) + 4) = amp*hann(9);
+p(floor(2 * N / 3) - 4 : floor(2 * N / 3) + 4) = amp*hann(9);
 
 % Initialise output
 out = zeros (lengthSound, 1);
@@ -180,7 +181,7 @@ for n = 1:lengthSound
     pNext(pRange) = p(pRange) - rho * c * lambda ./ SBar(pRange) .* (SHalf(pRange) .* vNext(pRange) - SHalf(pRange-1) .* vNext(pRange-1));
     pNext(1) = p(1) - rho * c * lambda / SBar(1) .* ( ... %-2 * (Ub + Ur) +
         2 * SHalf(1) * vNext(1));
-    pNext(N) = ((1 - rho * c * lambda * z3) * p(N) - 2 * rho * c * lambda * (v1 + z4 * p1 - (SHalf(end) .* vNext(end))/SBar(N))) / (1 + rho * c * lambda * z3);
+%     pNext(N) = ((1 - rho * c * lambda * z3) * p(N) - 2 * rho * c * lambda * (v1 + z4 * p1 - (SHalf(end) .* vNext(end))/SBar(N))) / (1 + rho * c * lambda * z3);
 %     pNext(N) = alphaR * p(N) + betaR * SHalf(end) * vNext(end) + epsilonR * v1 + nuR * p1;
 
     v1Next = v1 + k / (2 * Lr) * (pNext(N) + p(N));
@@ -191,8 +192,8 @@ for n = 1:lengthSound
     out(n) = p(outputPos);
     
     %% Energies
-    kinEnergy(n) = 1/(2 * rho * c^2) * h * sum(SBar .* scaling .* p.^2);
-    potEnergy(n) = rho / 2 * h * sum(SHalf .* vNext .* v);
+    potEnergy(n) = 1/(2 * rho * c^2) * h * sum(SBar .* scaling .* p.^2);
+    kinEnergy(n) = rho / 2 * h * sum(SHalf .* vNext .* v);
     hTube(n) = kinEnergy(n) + potEnergy(n);
 %     hReed(n) = M / 2 * ((1/k * (y - yPrev))^2 + omega0^2 * (y^2 + yPrev^2) / 2);
 %     hColl(n) = psiPrev^2 / 2;
@@ -271,6 +272,7 @@ for n = 1:lengthSound
 %     psiPrev = psi; 
 
 end   
+noBoundaryenergy = true;
 plotEnergyWebster;
 function [S, SHalf, SBar] = setTube(N, NnonExtended, setToOnes)
 

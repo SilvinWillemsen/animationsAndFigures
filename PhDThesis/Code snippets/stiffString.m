@@ -1,6 +1,6 @@
 % close all;
 % clear all;
-drawThings = false;
+drawThings = true;
 drawEnergy = false;
 drawSpeed = 1;
 
