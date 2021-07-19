@@ -28,7 +28,7 @@ for i = 1:maxIterations
     ylim([-1.5    3.5])
     xlabel('$x$', 'interpreter', 'latex')
     ylabel('$f(x)$', 'interpreter', 'latex')
-    title("$i =\ $" + i, 'interpreter', 'latex')
+    title("$i = " + i + "$", 'interpreter', 'latex')
     set(gca, 'Position', [0.1541 0.1379 0.7956 0.7871], 'Linewidth', 2, ...
         'Fontsize', 16)
     grid on
