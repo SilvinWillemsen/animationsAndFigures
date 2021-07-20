@@ -81,6 +81,10 @@ Amat = (1 + sig0 * k);
 B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx + 2 * sig1 * k * Dxx;
 C = -(1 - sig0 * k) * Id - 2 * sig1 * k * Dxx;
 
+Amat = (1 + sig0 * k) * speye(N+1) - sig1 * k * Dxx;
+B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx;
+C = -(1 - sig0 * k) * Id - sig1 * k * Dxx;
+
 %% Initial conditions (raised cosine)
 ratio = 0.3;
 loc = floor(ratio * N);       % Center location
@@ -140,7 +144,7 @@ end
 for n = 1:lengthSound
         
     % Update equation 
-    uNext = B / Amat * u + C / Amat * uPrev;
+    uNext = Amat \ (B * u + C  * uPrev);
     
     % Retrieve output
     out(n) = u(3);
@@ -213,17 +217,17 @@ for n = 1:lengthSound
 %                 uPlot = u;
 %             end
 %     %         hold off;
-%             plot((0:Norig) / Norig, uPlot, 'k', 'Linewidth', 1.5)
-%             xticks([0 1])
-%             xticklabels({'$0$','$L$'})
-%             ylim([-1.1, 1.1])
-%             xLab = xlabel('$x$', 'interpreter', 'latex', 'Fontsize', 16);
-%             xLab.Position(2) = -1.25;
-%             yLab = ylabel('$u$', 'interpreter', 'latex', 'Fontsize', 16);
-%             yLab.Position(1) = -0.05;
-%             set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', ...
-%                 'Position', [0.1036 0.1396 0.8750 0.8306], 'Linewidth', 2)
-% 
+            plot((0:Norig) / Norig, [0;u;0], 'k', 'Linewidth', 1.5)
+            xticks([0 1])
+            xticklabels({'$0$','$L$'})
+            ylim([-1.1, 1.1])
+            xLab = xlabel('$x$', 'interpreter', 'latex', 'Fontsize', 16);
+            xLab.Position(2) = -1.25;
+            yLab = ylabel('$u$', 'interpreter', 'latex', 'Fontsize', 16);
+            yLab.Position(1) = -0.05;
+            set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', ...
+                'Position', [0.1036 0.1396 0.8750 0.8306], 'Linewidth', 2)
+drawnow;
 %             pause
 %         end
         
