@@ -76,16 +76,15 @@ uw(1:Nu-1) = u;
 uwPrev = uw;
 
 B = zeros(Nu + Nw - 2);
-fVec = [k^2 / (rhou*Au) * cu^2 * Iu * Dxxu, k^2 / (rhow*Aw) * -cw^2 * Iw * Dxxw];
-% puu = -Ju * k^2 / (rhou*Au) * cu^2 * Iu * Dxxu;
-% puw = -Ju * k^2 / (rhou*Au) * -cw^2 * Iw * Dxxw;
-% pww = Jw * k^2 / (rhow*Aw) * -cw^2 * Iw * Dxxw;
-% pwu = Jw * k^2 / (rhow*Aw) * cu^2 * Iu * Dxxu;
+puu = -Ju * k^2 / (rhou*Au) * cu^2 * Iu * Dxxu;
+puw = -Ju * k^2 / (rhou*Au) * -cw^2 * Iw * Dxxw;
+pww = Jw * k^2 / (rhow*Aw) * -cw^2 * Iw * Dxxw;
+pwu = Jw * k^2 / (rhow*Aw) * cu^2 * Iu * Dxxu;
 pMat = [puu, puw;
-        pwu, pww] / (Iu * Ju / (rhou * Au) + Iw * Jw / (rhow * Aw));
-B(1:Nu-1, 1:Nu-1) = Bu;
-B(Nu:end, Nu:end) = Bw;
-B = B + pMat;
+        pwu, ]
+B(1:Nu-1, 1:Nu-1) = Bu - puu;
+B(Nu:end, Nu:end) = Bw - pww;
+B(Nu:end)
 
 %% Main Loop
 for n = 1:lengthSound
@@ -146,20 +145,12 @@ for n = 1:lengthSound
             return;
         end
     elseif ~plotSubplots
-        subplot(211)
         hold off
         plot((0:Nu) / Nu, [0; uw(1:Nu-1); 0], 'r', 'Linewidth', 2)
         hold on;
-        plot((0:Nu) / Nu, [0; u; 0], '--g', 'Linewidth', 2)
         plot((0:Nw)/ Nw + (xcu+alphaU)/Nu - (xcw+alphaW)/Nw, [0; uw(Nu:end); 0] - offset, ...   
             'b', 'Linewidth', 2)
-        plot((0:Nw)/ Nw + (xcu+alphaU)/Nu - (xcw+alphaW)/Nw, [0; w; 0] - offset, ...   
-            '--g', 'Linewidth', 2)
-        subplot(212)
-        hold off;
-        plot(uw(1:Nu-1) - u)
-        hold on;
-        plot(uw(Nu:end)- w)
+
         drawnow;
     end
     % Update States
