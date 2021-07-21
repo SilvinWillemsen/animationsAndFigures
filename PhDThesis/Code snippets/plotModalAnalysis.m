@@ -28,7 +28,7 @@ color = 'k';
 % create Q matrix (one-step form)
 if ~QisGiven
     Q = [Amat \ B, Amat \ C;
-         speye(N+1), sparse(zeros(N+1))];
+         speye(size(B)), sparse(zeros(size(B)))];
 end
 % obtain complex frequencies
 s = 1/k * log(eig(full(Q)));
@@ -45,11 +45,11 @@ if firstPlot
     plot(0, 0)
 end
 hold on
-scatter(1:length(s), imag(s)/(2*pi), color, 'Linewidth', 2)
+scatter(imag(s)/(2*pi), imag(s)/(2*pi), color, 'Linewidth', 2)
 grid on
 xlabel("Mode number $p$", 'interpreter', 'latex')
 ylabel("$f_p$ [Hz]", 'interpreter', 'latex')
-xlim([1, length(s)])
+% xlim([1, length(s)])
 title("Modal frequency")
 set(gca, 'Fontsize', 16, 'Linewidth', 2, 'FontName', 'times', ...
         'Position', plot1Pos)

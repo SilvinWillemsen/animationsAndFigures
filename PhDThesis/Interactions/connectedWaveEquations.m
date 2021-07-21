@@ -1,4 +1,4 @@
-close all;
+% close all;
 clear all;
 
 fs = 44100;
@@ -21,7 +21,7 @@ lambdaSqu = cu^2 * k^2 / hu^2;
 % initialise variables for w
 rhow = 7850;
 Aw = pi * 0.0005^2;
-cw = 600;
+cw = 400;
 Tw = cw^2 * rhow * Aw; 
 
 Lw = 1;
@@ -34,11 +34,14 @@ lambdaSqw = cw^2 * k^2 / hw^2
 u = zeros(Nu-1, 1);
 halfWidth = 5;
 width = halfWidth*2 + 1;
-startLoc = floor(Nu * 0.5) - halfWidth;
-u(startLoc:startLoc+width-1) = hann(width);
+startLoc = floor(Nu * 0.5) - halfWidth + 1;
+amp = 1;
+u(startLoc:startLoc+width-1) = amp * hann(width);
 uPrev = u;
 
 w = zeros(Nw-1, 1);
+startLoc = floor(Nw * 0.5) - halfWidth + 1;
+w(startLoc:startLoc+width-1) = amp * hann(width);
 wPrev = w;
 
 Dxxu = 1/hu^2 * toeplitz([-2, 1, zeros(1, Nu-3)]);
@@ -49,17 +52,21 @@ Bw = 2 * eye(Nw-1) + cw^2 * k^2 * Dxxw;
 connLocU = 0.25;
 xcu = floor(connLocU * Nu);
 alphaU = connLocU * Nu - xcu;
+xcu = xcu + 1; %matlab
 Iu = zeros(1, Nu-1);
-cubInterp = [-alphaU * (alphaU - 1) * (alphaU - 2) / 6, ...
-    (alphaU - 1) * (alphaU + 1) * (alphaU - 2) / 2, ...
-    -alphaU * (alphaU + 1) * (alphaU - 2) / 2, ...
-    alphaU * (alphaU + 1) * (alphaU - 1) / 6]
-Iu(xcu-1:xcu+2) = cubInterp;
+% cubInterp = [-alphaU * (alphaU - 1) * (alphaU - 2) / 6, ...
+%     (alphaU - 1) * (alphaU + 1) * (alphaU - 2) / 2, ...
+%     -alphaU * (alphaU + 1) * (alphaU - 2) / 2, ...
+%     alphaU * (alphaU + 1) * (alphaU - 1) / 6]
+% Iu(xcu-1:xcu+2) = cubInterp;
+Iu(xcu) = 1 - alphaU;
+Iu(xcu+1) = alphaU;
 Ju = 1/hu * Iu';
 
 connLocW = 0.75;
 xcw = floor(connLocW * Nw);
 alphaW = connLocW * Nw - xcw;
+xcw = xcw + 1; %matlab
 Iw = zeros(1, Nw-1);
 Iw(xcw) = 1 - alphaW;
 Iw(xcw+1) = alphaW;
@@ -69,29 +76,34 @@ if drawThings
     plotNum = 1;
     figure('Position', [180 454 820 344])
 end
-offset = 0.5;
+offset = amp * 0.5;
 
 uw = zeros(Nu + Nw - 2, 1);
 uw(1:Nu-1) = u;
 uwPrev = uw;
 
 B = zeros(Nu + Nw - 2);
-fVec = [k^2 / (rhou*Au) * cu^2 * Iu * Dxxu, k^2 / (rhow*Aw) * -cw^2 * Iw * Dxxw];
+fDiv = Iu * Ju / (rhou * Au) + Iw * Jw / (rhow * Aw);
+
+fVec = [k^2 / (rhou * Au) * cu^2 * Iu * Dxxu / fDiv, ...
+        - k^2 / (rhow * Aw) * cw^2 * Iw * Dxxw / fDiv];
 % puu = -Ju * k^2 / (rhou*Au) * cu^2 * Iu * Dxxu;
 % puw = -Ju * k^2 / (rhou*Au) * -cw^2 * Iw * Dxxw;
 % pww = Jw * k^2 / (rhow*Aw) * -cw^2 * Iw * Dxxw;
 % pwu = Jw * k^2 / (rhow*Aw) * cu^2 * Iu * Dxxu;
-pMat = [puu, puw;
-        pwu, pww] / (Iu * Ju / (rhou * Au) + Iw * Jw / (rhow * Aw));
 B(1:Nu-1, 1:Nu-1) = Bu;
 B(Nu:end, Nu:end) = Bw;
-B = B + pMat;
+B = B + [-Ju ; Jw] * fVec;
 
+Amat = speye(size(B));
+C = -speye(size(B));
+
+plotModalAnalysis;
 %% Main Loop
 for n = 1:lengthSound
     f = (cu^2 * Iu * Dxxu * u - cw^2 * Iw * Dxxw * w) / (Iu * Ju / (rhou * Au) + Iw * Jw / (rhow * Aw));
-    uNext = Bu * u - uPrev - Ju * k^2 / (rhou*Au) * f;
-    wNext = Bw * w - wPrev + Jw * k^2 / (rhow*Aw) * f;
+    uNext = Bu * u - uPrev;% - Ju * k^2 / (rhou*Au) * f;
+    wNext = Bw * w - wPrev;% + Jw * k^2 / (rhow*Aw) * f;
    
     uwNext = B * uw - uwPrev;
     
@@ -103,9 +115,11 @@ for n = 1:lengthSound
     kinEnergyW(n) = rhow * Aw /2 * hw * sum((1/k * (w-wPrev)).^2);
     potEnergyW(n) = Tw / (2*hw) * sum(([0; w] - [w; 0]) .* ([0; wPrev] - [wPrev; 0]));
     totEnergyW(n) = kinEnergyW(n) + potEnergyW(n);
-
     totEnergy(n) = totEnergyU(n) + totEnergyW(n);
     
+    out(n) = uw(2);
+    outU(n) = u(2);
+    outW(n) = w(2);
     %% Plot stuff
     if drawThings && mod(n, 18) == 1 && plotSubplots
         % system states
@@ -125,7 +139,7 @@ for n = 1:lengthSound
             legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
                 'location', 'northwest', 'Fontsize', 16)
         end
-        ylim([-0.5-offset, 1])
+        ylim([-amp * 0.5-offset, amp * 1])
         xticks([])
         yticks([])
         title("$n = " + n + "$", 'interpreter', 'latex', 'Fontsize', 16)
@@ -145,7 +159,7 @@ for n = 1:lengthSound
         if plotNum > 6
             return;
         end
-    elseif ~plotSubplots
+    elseif ~plotSubplots && drawThings
         subplot(211)
         hold off
         plot((0:Nu) / Nu, [0; uw(1:Nu-1); 0], 'r', 'Linewidth', 2)

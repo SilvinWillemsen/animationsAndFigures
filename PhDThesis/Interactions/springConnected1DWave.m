@@ -4,9 +4,9 @@ clear all;
 fs = 44100;
 lengthSound = fs;
 k = 1/fs;
-drawThings = true;
+drawThings = false;
 drawSpeed = 1;
-plotSubplots = false;
+plotSubplots = true;
 % initialise variables for u
 rhou = 7850;
 Au = pi * 0.0005^2;
@@ -22,7 +22,7 @@ lambdaSqu = cu^2 * k^2 / hu^2;
 % initialise variables for w
 rhow = 7850;
 Aw = pi * 0.0005^2;
-cw = 600;
+cw = 400;
 Tw = cw^2 * rhow * Aw; 
 
 Lw = 1;
@@ -35,8 +35,9 @@ lambdaSqw = cw^2 * k^2 / hw^2
 u = zeros(Nu-1, 1);
 halfWidth = 5;
 width = halfWidth*2 + 1;
-startLoc = floor(Nu * 0.5) - halfWidth;
-u(startLoc:startLoc+width-1) = hann(width);
+startLoc = floor(Nu * 0.5) - halfWidth + 1;
+amp = 5;
+u(startLoc:startLoc+width-1) = amp * hann(width);
 uPrev = u;
 
 w = zeros(Nw-1, 1);
@@ -68,13 +69,14 @@ Jw = 1/hw * Iw';
 
 if drawThings
     plotNum = 1;
-    offset = 0.5;
+    offset = amp * 0.5;
     figure('Position', [180 454 820 344])
 end
-K = 1e5;
+K = 5e4;
 
 %% Main Loop
 for n = 1:lengthSound
+    eta = Iu * u - Iw * w;
     etaPrev = Iu * uPrev - Iw * wPrev;
     
     uStar = Bu * u - uPrev;
@@ -94,56 +96,56 @@ for n = 1:lengthSound
     potEnergyW(n) = Tw / (2*hw) * sum(([0; w] - [w; 0]) .* ([0; wPrev] - [wPrev; 0]));
     totEnergyW(n) = kinEnergyW(n) + potEnergyW(n);
 
-%     connEnergy(n) = 
+    connEnergy(n) = K/4 * (eta^2 + etaPrev^2);
     
-    totEnergy(n) = totEnergyU(n) + totEnergyW(n);
+    totEnergy(n) = totEnergyU(n) + totEnergyW(n) + connEnergy(n);
     
     %% Plot stuff
     if drawThings && mod(n, 18) == 1 && plotSubplots
         % system states
-            subplot(2, 3, plotNum);
-            hold off;
-            plot((0:Nu) / Nu, [0; u; 0], 'r', 'Linewidth', 2)
-            hold on;
-            plot((0:Nw)/ Nw + (xcu+alphaU)/Nu - (xcw+alphaW)/Nw, [0; w; 0] - offset, ...
-                'b', 'Linewidth', 2)
-            if plotNum == 1
-                legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
-                    'location', 'northwest')
-            end
-            plot([(xcu+alphaU), (xcu+alphaU)]/Nu, [Iu * u, Iw * w - offset], ...
-                'color', [0.5, 0.5, 0.5], 'Linewidth', 2)
-            if plotNum == 1
-                legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
-                    'location', 'northwest', 'Fontsize', 16)
-            end
-            ylim([-0.5-offset, 1])
-            xticks([])
-            yticks([])
-            title("$n = " + n + "$", 'interpreter', 'latex', 'Fontsize', 16)
-            if plotNum<4
-            set(gca, 'Position', [0.009+0.33*(plotNum-1) 0.53 0.32 0.4], ...
-                    'Linewidth', 2)
-            else
-                set(gca, 'Position', [0.009+0.33*(plotNum-4) 0.0438 0.32 0.4], ...
-                    'Linewidth', 2)
-            end
-            plotNum = plotNum + 1;
-            if plotNum > 6
-                return;
-            end
-    elseif drawThings && mod(n, drawSpeed) == 0 && ~plotSubplots
-            subplot(211)
-            hold off;
-            plot((0:Nu) / Nu, [0; u; 0], 'r', 'Linewidth', 2)
-            hold on;
-            plot((0:Nw)/ Nw + (xcu+alphaU)/Nu - (xcw+alphaW)/Nw, [0; w; 0] - offset, ...
-                'b', 'Linewidth', 2)
-            % energy
-            subplot(212)
-            plot(totEnergy(1:n) / totEnergy(1) - 1);
+        subplot(2, 3, plotNum);
+        hold off;
+        plot((0:Nu) / Nu, [0; u; 0], 'r', 'Linewidth', 2)
+        hold on;
+        plot((0:Nw)/ Nw + (xcu+alphaU)/Nu - (xcw+alphaW)/Nw, [0; w; 0] - offset, ...
+            'b', 'Linewidth', 2)
+        if plotNum == 1
+            legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
+                'location', 'northwest')
         end
-        
+        plot([(xcu+alphaU), (xcu+alphaU)]/Nu, [Iu * u, Iw * w - offset], ...
+            'color', [0.5, 0.5, 0.5], 'Linewidth', 2)
+        if plotNum == 1
+            legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
+                'location', 'northwest', 'Fontsize', 16)
+        end
+        ylim([-amp*0.5-offset, amp*1])
+        xticks([])
+        yticks([])
+        title("$n = " + n + "$", 'interpreter', 'latex', 'Fontsize', 16)
+        if plotNum<4
+        set(gca, 'Position', [0.009+0.33*(plotNum-1) 0.53 0.32 0.4], ...
+                'Linewidth', 2)
+        else
+            set(gca, 'Position', [0.009+0.33*(plotNum-4) 0.0438 0.32 0.4], ...
+                'Linewidth', 2)
+        end
+        plotNum = plotNum + 1;
+        if plotNum > 6
+            return;
+        end
+        drawnow;
+
+    elseif drawThings && mod(n, drawSpeed) == 0 && ~plotSubplots
+        subplot(211)
+        hold off;
+        plot((0:Nu) / Nu, [0; u; 0], 'r', 'Linewidth', 2)
+        hold on;
+        plot((0:Nw)/ Nw + (xcu+alphaU)/Nu - (xcw+alphaW)/Nw, [0; w; 0] - offset, ...
+            'b', 'Linewidth', 2)
+        % energy
+        subplot(212)
+        plot(totEnergy(1:n) / totEnergy(1) - 1);    
         drawnow;
     end
     % Update States

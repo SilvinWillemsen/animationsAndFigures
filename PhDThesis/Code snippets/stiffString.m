@@ -81,10 +81,6 @@ Amat = (1 + sig0 * k);
 B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx + 2 * sig1 * k * Dxx;
 C = -(1 - sig0 * k) * Id - 2 * sig1 * k * Dxx;
 
-Amat = (1 + sig0 * k) * speye(N+1) - sig1 * k * Dxx;
-B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx;
-C = -(1 - sig0 * k) * Id - sig1 * k * Dxx;
-
 %% Initial conditions (raised cosine)
 ratio = 0.3;
 loc = floor(ratio * N);       % Center location
