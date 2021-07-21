@@ -1,26 +1,30 @@
 close all;
 clear all;
 
-fs = 44100;
-lengthSound = fs;
+%% Initialise variables
+fs = 44100;         % Sample rate [Hz]
+k = 1 / fs;         % Time step [s]
+lengthSound = fs;   % Length of the simulation (1 second) [samples]             
 
-k = 1/fs;
-drawThings = false;
+%% Plotting
+drawThings = false;     % Plot or not
+drawSpeed = 10;         % 
 plotSubplots = false;
+calcEnergy = true;
 
 %% Initialise variables for string
 rhoS = 7850;
-rS = 0.001;
+rS = 0.0005;
 AS = pi * rS^2;
 ES = 2e11;
 IS = pi * rS^4 / 4; 
-cS = 300;
-TS = cS^2 * rhoS * AS;
-sig0S = 0;
-sig1S = 0.0;
+TS = 555;
+cS = sqrt(TS / (rhoS * AS));
+sig0S = 1;
+sig1S = 0.005;
 kappaSqS = ES * IS / (rhoS * AS);
 
-LS = 1;
+LS = 1.5;
 hS = sqrt((cS^2 * k^2 + 4 * sig1S * k + sqrt((cS^2 * k^2 + 4 * sig1S * k)^2 + 16 * kappaSqS * k^2))/2);
 NS = floor(LS / hS);
 hS = LS / NS;
@@ -30,12 +34,12 @@ rhoP = 7850;
 EP = 2e11;
 HP = 0.0005;
 nu = 0.3;
-sig0P = 0.0;
-sig1P = 0.000;
+sig0P = 1.0;
+sig1P = 0.005;
 Dvar = EP * HP^3 / (12 * (1-nu^2));
 kappaSqP = Dvar / (rhoP * HP);
 
-Lx = 1;
+Lx = 1.5;
 Ly = 1;
 hP = 2 * sqrt(k * (sig1P + sqrt(kappaSqP + sig1P^2)));
 Nx = floor(Lx / hP);
@@ -79,12 +83,14 @@ CP = -(1-sig0P * k) * speye(Nw) - 2 * sig1P * k * D;
 
 
 %% Initialise states (simply supported boundary conditions)
+amp = 5;
+offset = amp * 0.5;
 u = zeros(NS-1, 1);
 halfWidth = 5;
+loc = 0.33333;
 width = halfWidth*2 + 1;
-startLoc = floor(NS * 0.5) - halfWidth + 1;
-amp = 5;
-u(startLoc:startLoc+width-1) = amp * hann(width);
+startLoc = floor(NS * loc) - halfWidth + 1;
+u(startLoc:startLoc+width-1) = u(startLoc:startLoc+width-1) + amp * hann(width);
 uPrev = u;
 
 wNext = zeros(Nw, 1); 
@@ -97,9 +103,9 @@ w = zeros(Nw, 1);
 wPrev = w;
 
 %% Connection Variables
-K1 = 100;
+K1 = 1e4;
 K3 = 1e7;
-R = 0.1;
+R = 10;
 
 %% connection string
 connLocU = 0.25;
@@ -112,7 +118,7 @@ Iu(xcu+1) = alphaU;
 Ju = 1/hS * Iu';
 
 %% connection plate
-connLocWX = 0.75;
+connLocWX = 0.25;
 connLocWY = 0.75;
 
 xcwX = floor(connLocWX * Nxw);
@@ -136,7 +142,6 @@ if drawThings
     plotNum = 1;
     figure('Position', [180 454 820 344])
 end
-offset = amp * 0.5;
 
 out = zeros(lengthSound, 1);
 
@@ -168,126 +173,152 @@ totEnergy = zeros(lengthSound, 1);
 %% Main Loop
 for n = 1:lengthSound
     
-    uStar = Iu * (AmatS \ (BS * u + CS * uPrev));
-    wStar = Iw * (AmatP \ (BP * w + CP * wPrev));
+    %% Calculate system states at connection locations without force term 
+    uPre = AmatS \ (BS * u + CS * uPrev);
+    wPre = AmatP \ (BP * w + CP * wPrev);
     
+    uStar = Iu * uPre;
+    wStar = Iw * wPre;
+
+    % Relative displacement at n and n-1
     eta = Iu * u - Iw * w;
     etaPrev = Iu * uPrev - Iw * wPrev;
 
+    %% Calculate force
     rPlus = K1 / 4 + K3 * eta^2 / 2 + R / (2*k);
     rMinus = K1 / 4 + K3 * eta^2 / 2 - R / (2*k);
     
     f = (uStar - wStar + K1 / (2 * rPlus) * eta + rMinus / rPlus * etaPrev) ...
             / (1/rPlus + Iu * Ju * k^2 / (rhoS * AS * (1+sig0S * k)) + Iw * Jw * k^2 / (rhoP * HP * (1+sig0P * k)));
     
-    uNext = AmatS \ (BS * u + CS * uPrev) - Ju * k^2 * f / (rhoS * AS * (1+sig0S * k));
-    wNext = AmatP \ (BP * w + CP * wPrev) + Jw * k^2 * f / (rhoP * HP * (1+sig0P * k));
+    %% Calculate scheme
+    uNext = uPre - Ju * k^2 * f / (rhoS * AS * (1 + sig0S * k));
+    wNext = wPre + Jw * k^2 * f / (rhoP * HP * (1 + sig0P * k));
        
     out(n) = Iu * uNext;
     etaNext = Iu * uNext - Iw * wNext;
+    if calcEnergy 
+        %% energy string
+        kinEnergyU(n) = rhoS * AS * hS / 2 * sum((1/k * (u - uPrev)).^2);
+        potEnergyU(n) = TS / 2 * hS * sum((Dxp * [0; u]) .* (Dxp * [0; uPrev])) ...
+            + ES * IS * hS / 2 * sum((DxxS * u) .* (DxxS * uPrev));
 
-    %% energy string
-    kinEnergyU(n) = rhoS * AS * hS / 2 * sum((1/k * (u - uPrev)).^2);
-    potEnergyU(n) = TS / 2 * hS * sum((Dxp * [0; u]) .* (Dxp * [0; uPrev])) ...
-        + ES * IS * hS / 2 * sum((DxxS * u) .* (DxxS * uPrev));
+        % damping
+        q0U(n) = 2 * sig0S * rhoS * AS * hS * sum((1/(2*k) * (uNext - uPrev)).^2);
+        q1U(n) = - 2 * sig1S * rhoS * AS * hS * sum(1/(2*k) * (uNext - uPrev)...
+            .* (1/k * (DxxS * u - DxxS * uPrev)));
+        idx = n - (1 * (n~=1));
+        qTotU = qTotU + k * (q0U(idx) + q1U(idx));
 
-    % damping
-    q0U(n) = 2 * sig0S * rhoS * AS * hS * sum((1/(2*k) * (uNext - uPrev)).^2);
-    q1U(n) = - 2 * sig1S * rhoS * AS * hS * sum(1/(2*k) * (uNext - uPrev)...
-        .* (1/k * (DxxS * u - DxxS * uPrev)));
-    idx = n - (1 * (n~=1));
-    qTotU = qTotU + k * (q0U(idx) + q1U(idx));
+        % total energy 
+        totEnergyU(n) = kinEnergyU(n) + potEnergyU(n) + qTotU;
 
-    % total energy 
-    totEnergyU(n) = kinEnergyU(n) + potEnergyU(n) + qTotU;
+        kinEnergyW(n) = rhoP * HP / 2 * hP^2 * sum((1/k * (w-wPrev)).^2);
+
+    %         zeroU(2:end-1, 2:end-1) = reshapedU;
+    %         zeroUPrev(2:end-1, 2:end-1) = reshapedUPrev;
+    %         uEn = reshape(zeroU, (Nx+1) * (Ny+1), 1);
+    %         uPrevEn = reshape(zeroUPrev, (Nx+1) * (Ny+1), 1);
+        potEnergyW(n) = Dvar * hP^2 / 2 * sum((D * w) .* (D * wPrev));
+        q0W(n) = 2 * sig0P * rhoP * HP * hP^2 * sum((1/(2*k) * (wNext - wPrev)).^2);
+        q1W(n) = -2 * sig1P * rhoP * HP * hP^2 * sum(1/(2*k) * (wNext - wPrev)...
+            .* (1/k * (D * w - D * wPrev)));
+        idx = n - (1 * (n~=1));
+        qTotW = qTotW + k * (q0W(idx) + q1W(idx));
+
+        totEnergyW(n) = kinEnergyW(n) + potEnergyW(n) + qTotW;
+
+        connEnergy(n) = K1 / 8 * (eta + etaPrev)^2 + K3 / 4 * (eta^2 * etaPrev^2);
+        qC(n) = R * (1/(2*k) * (etaNext - etaPrev))^2;
+
+        qTotC = qTotC + k * qC(idx);
+        totEnergyC(n) = connEnergy(n) + qTotC;
+        totEnergy(n) = totEnergyU(n) + totEnergyW(n) + totEnergyC(n);
+    end
     
-    kinEnergyW(n) = rhoP * HP / 2 * hP^2 * sum((1/k * (w-wPrev)).^2);
-        
-%         zeroU(2:end-1, 2:end-1) = reshapedU;
-%         zeroUPrev(2:end-1, 2:end-1) = reshapedUPrev;
-%         uEn = reshape(zeroU, (Nx+1) * (Ny+1), 1);
-%         uPrevEn = reshape(zeroUPrev, (Nx+1) * (Ny+1), 1);
-    potEnergyW(n) = Dvar * hP^2 / 2 * sum((D * w) .* (D * wPrev));
-    q0W(n) = 2 * sig0P * rhoP * HP * hP^2 * sum((1/(2*k) * (wNext - wPrev)).^2);
-    q1W(n) = -2 * sig1P * rhoP * HP * hP^2 * sum(1/(2*k) * (wNext - wPrev)...
-        .* (1/k * (D * w - D * wPrev)));
-    idx = n - (1 * (n~=1));
-    qTotW = qTotW + k * (q0W(idx) + q1W(idx));
-
-    totEnergyW(n) = kinEnergyW(n) + potEnergyW(n) + qTotW;
-    
-    connEnergy(n) = K1 / 8 * (eta + etaPrev)^2 + K3 / 4 * (eta^2 * etaPrev^2);
-    qC(n) = R * (1/(2*k) * (etaNext - etaPrev))^2;
-
-    qTotC = qTotC + k * qC(idx);
-    totEnergyC(n) = connEnergy(n) + qTotC;
-    totEnergy(n) = totEnergyU(n) + totEnergyW(n) + totEnergyC(n);
-
-   
     %% Plot stuff
-    if drawThings && mod(n, 18) == 1 && plotSubplots
+    if drawThings && ((~plotSubplots && mod(n, drawSpeed) == 0)...
+            || plotSubplots && mod(n, 18) == 1)
         % system states
-        subplot(2, 3, plotNum);
+        if plotSubplots
+            subplot(2, 3, plotNum);
+        end
         hold off;
-        plot((0:NS) / NS, [0; u; 0], 'r', 'Linewidth', 2)
+        
+        u_s = plot3([0:NS] + xcwX +1 - xcu, xcwY * ones(NS+1), [0;u;0] + offset, 'r', 'Linewidth', 2);
+        view(20,35);
         hold on;
-        plot((0:Nw)/ Nw + (xcu+alphaU)/NS - (xcwX+alphaWX)/Nw, [0; w; 0] - offset, ...
-            'b', 'Linewidth', 2)
-        if plotNum == 1
-            legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
-                'location', 'northwest')
-        end
-        plot([(xcu+alphaU), (xcu+alphaU)]/NS, [Iu * u, Iw * w - offset], ...
-            'color', [0.5, 0.5, 0.5], 'Linewidth', 2)
-        if plotNum == 1
-            legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
-                'location', 'northwest', 'Fontsize', 16)
-        end
-        ylim([-amp * 0.5-offset, amp * 1])
+        mesh(reshape(w, Nyw, Nxw))
+        colormap gray;
+        caxis([-0.05, 0.05]);
+        plot3([xcwX, xcwX]+1, [xcwY, xcwY], [Iu * u + offset, Iw * w], 'color', [0, 0.85, 0], 'Linewidth', 2)
+%         if plotNum == 1
+%             legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
+%                 'location', 'northwest')
+%         end
+%         plot([(xcu+alphaU), (xcu+alphaU)]/NS, [Iu * u, Iw * w - offset], ...
+%             'color', [0.5, 0.5, 0.5], 'Linewidth', 2)
+        
+
+        
+        zlim([-0.2, amp + offset])
         xticks([])
         yticks([])
+        zticks([])
         title("$n = " + n + "$", 'interpreter', 'latex', 'Fontsize', 16)
         % energy
 %         subplot(212)
 %         plot(totEnergy(1:n) / totEnergy(1) - 1);
-        
-        
-        if plotNum<4
-            set(gca, 'Position', [0.009+0.33*(plotNum-1) 0.53 0.32 0.4], ...
-                'Linewidth', 2)
-        else
-            set(gca, 'Position', [0.009+0.33*(plotNum-4) 0.0438 0.32 0.4], ...
-                'Linewidth', 2)
+        box on
+        grid on
+        if plotSubplots
+
+%             if plotNum == 1
+%                 legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
+%                     'location', 'northwest', 'Fontsize', 16)
+%             end
+
+            if plotNum<4
+                set(gca, 'Position', [0.009+0.34*(plotNum-1) 0.53 0.31 0.4], ...
+                    'Linewidth', 1, 'Projection', 'perspective')
+            else
+                set(gca, 'Position', [0.009+0.34*(plotNum-4) 0.0438 0.31 0.4], ...
+                    'Linewidth', 1, 'Projection', 'perspective')
+            end
+                    plotNum = plotNum + 1;
+            if plotNum > 6
+                return;
+            end
         end
-        plotNum = plotNum + 1;
-        if plotNum > 6
-            return;
-        end
-    elseif ~plotSubplots && drawThings
-        subplot(311)
-        hold off
-        plot((0:NS) / NS, [0; u; 0], 'r', 'Linewidth', 2)
-        hold on;
-        subplot(312)
-%         mesh(reshape(w, Nyw, Nxw))
-%         plot((0:Nw)/ Nw + (xcu+alphaU)/NS - (xcwX+alphaWX)/Nw, [0; uw(NS:end); 0] - offset, ...   
-%             'b', 'Linewidth', 2)
-%         plot((0:Nw)/ Nw + (xcu+alphaU)/NS - (xcwX+alphaWX)/Nw, [0; w; 0] - offset, ...   
-%             '--g', 'Linewidth', 2)
-%         subplot(212)
-%         hold off;
-%         plot(uw(1:NS-1) - u)
-%         hold on;
-%         plot(uw(NS:end)- w)
-        subplot(313)
-%         hold off
-%         plot(totEnergyS(1:n) - totEnergyS(1))
-%         hold on;
-%         plot(totEnergyP(1:n) - totEnergyP(1))
-%         plot(totEnergyC(1:n) - totEnergyC(1))
-        plot(totEnergy(1:n) / totEnergy(1) - 1)
         drawnow;
     end
+%     elseif ~plotSubplots && drawThings
+%         subplot(311)
+%         hold off
+%         plot((0:NS) / NS, [0; u; 0], 'r', 'Linewidth', 2)
+%         hold on;
+%         subplot(312)
+% %         mesh(reshape(w, Nyw, Nxw))
+% %         plot((0:Nw)/ Nw + (xcu+alphaU)/NS - (xcwX+alphaWX)/Nw, [0; uw(NS:end); 0] - offset, ...   
+% %             'b', 'Linewidth', 2)
+% %         plot((0:Nw)/ Nw + (xcu+alphaU)/NS - (xcwX+alphaWX)/Nw, [0; w; 0] - offset, ...   
+% %             '--g', 'Linewidth', 2)
+% %         subplot(212)
+% %         hold off;
+% %         plot(uw(1:NS-1) - u)
+% %         hold on;
+% %         plot(uw(NS:end)- w)
+%         subplot(313)
+% %         hold off
+% %         plot(totEnergyS(1:n) - totEnergyS(1))
+% %         hold on;
+% %         plot(totEnergyP(1:n) - totEnergyP(1))
+% %         plot(totEnergyC(1:n) - totEnergyC(1))
+%         if calcEnergy
+%             plot(totEnergy(1:n) / totEnergy(1) - 1)
+%         end
+%         drawnow;
+%     end
     % Update States
     uPrev = u;
     u = uNext;
