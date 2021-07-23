@@ -16,7 +16,7 @@ lengthSound = fs;   % Length of the simulation (1 second) [samples]
 
 %% Plotting
 drawThings = true;     % To plot or not
-drawSpeed = 10;        % How fast to plot
+drawSpeed = 1;         % How fast to plot
 if drawThings
     figure('Position', [180 454 820 344])
 end
@@ -25,15 +25,15 @@ end
 LS = 0.75;                      % Length [m]
 rhoS = 7850;                    % Material density [kg/m^3]
 rS = 0.0005;                    % Radius [m]
-AS = pi * rS^2;                 % Cross-sectional area [m^2]
+A = pi * rS^2;                  % Cross-sectional area [m^2]
 ES = 2e11;                      % Young's modulus [Pa]
 IS = pi * rS^4 / 4;             % Area moment of inertia [m^4]
-TS = 555;                       % Tension [N]
+T = 555;                        % Tension [N]
 sig0S = 1;                      % Frequency-independent damping [1/s]
 sig1S = 0.005;                  % Frequency-dependent damping [m^2/s]
 
-cS = sqrt(TS / (rhoS * AS));        % Wave speed 
-kappaSqS = ES * IS / (rhoS * AS);   % Stiffness term
+cS = sqrt(T / (rhoS * A));        % Wave speed 
+kappaSqS = ES * IS / (rhoS * A);   % Stiffness term
 
 % Calculate grid spacing and number of points
 hS = sqrt((cS^2 * k^2 + 4 * sig1S * k ...
@@ -79,13 +79,13 @@ DxxS = toeplitz([-2, 1, zeros(1, NS-3)]) / hS^2;
 DxxxxS = DxxS * DxxS;
 
 % Matrices used for update equation
-AmatS = (1 + sig0S * k);
+AS = (1 + sig0S * k);
 BS = 2 * IdS + cS^2 * k^2 * DxxS - kappaSqS * k^2 * DxxxxS + 2 * sig1S * k * DxxS;
 CS = -(1 - sig0S * k) * IdS - 2 * sig1S * k * DxxS;
 
 % Include the division before main loop for faster computation
-BSoverA = BS / AmatS;
-CSoverA = CS / AmatS;
+BSoverA = BS / AS;
+CSoverA = CS / AS;
 
 
 %% Initialise plate matrices (simply supported boundaries)
@@ -104,13 +104,13 @@ DD = D*D;
 Nw = Nxw * Nyw;
 
 % Matrices used for update equation
-AmatP = speye(Nw) * (1 + sig0P * k);
+AP = (1 + sig0P * k);
 BP = 2 * speye(Nw) - kappaSqP * k^2 * DD + 2 * sig1P * k * D;
 CP = -(1-sig0P * k) * speye(Nw) - 2 * sig1P * k * D;
 
 % Include the division before main loop for faster computation
-BPoverA = BP / AmatP;
-CPoverA = CP / AmatP;
+BPoverA = BP / AP;
+CPoverA = CP / AP;
 
 %% Matrices used for energy analysis
 
@@ -119,7 +119,7 @@ Dxp = sparse(1:NS, 1:NS, -ones(1, NS), NS, NS) + ...
         sparse(1:NS-1, 2:NS, ones(1, NS-1), NS, NS);
 Dxp = Dxp / hS;
 
-% Discrete Laplacian (plat
+% Discrete Laplacian (plate)
 DxxEnP = toeplitz([-2, 1, zeros(1, Nxw)]);
 DyyEnP = toeplitz([-2, 1, zeros(1, Nyw)]);
 DEnPP = kron(speye(Nxw+2), DyyEnP) + kron(DxxEnP, speye(Nyw+2));
@@ -148,7 +148,7 @@ wPrev = w;
 % string
 xcu = floor(connLocS * NS);
 alphaU = connLocS * NS - xcu;
-xcu = xcu + 1; % +1 because of 1-based matlab
+xcu = xcu + 1;          % +1 because of 1-based matlab
 
 Iu = zeros(1, NS-1);    % interpolation operator
 Iu(xcu) = 1 - alphaU;
@@ -159,10 +159,10 @@ Ju = 1/hS * Iu';        % spreading operator
 % plate
 xcwX = floor(connLocPX * Nxw);
 alphaWX = connLocPX * Nxw - xcwX;
-xcwX = xcwX + 1; % +1 because of 1-based matlab
+xcwX = xcwX + 1;        % +1 because of 1-based matlab
 xcwY = floor(connLocPY * Nyw);
 alphaWY = connLocPY * Nyw - xcwY;
-xcwY = xcwY + 1; % +1 because of 1-based matlab
+xcwY = xcwY + 1;        % +1 because of 1-based matlab
 
 Imat = zeros(Nyw, Nxw); % interpolation operator
 Imat(xcwY, xcwX) = (1 - alphaWX) * (1 - alphaWY);
@@ -224,10 +224,10 @@ for n = 1:lengthSound
     rMinus = K1 / 4 + K3 * eta^2 / 2 - R / (2*k);
     
     f = (uStar - wStar + K1 / (2 * rPlus) * eta + rMinus / rPlus * etaPrev) ...
-            / (1/rPlus + Iu * Ju * k^2 / (rhoS * AS * (1+sig0S * k)) + Iw * Jw * k^2 / (rhoP * HP * (1+sig0P * k)));
+            / (1/rPlus + Iu * Ju * k^2 / (rhoS * A * (1+sig0S * k)) + Iw * Jw * k^2 / (rhoP * HP * (1+sig0P * k)));
     
     %% Add forces to scheme
-    uNext = uInt - Ju * k^2 * f / (rhoS * AS * (1 + sig0S * k));
+    uNext = uInt - Ju * k^2 * f / (rhoS * A * (1 + sig0S * k));
     wNext = wInt + Jw * k^2 * f / (rhoP * HP * (1 + sig0P * k));
        
     % Retrieve output
@@ -242,13 +242,13 @@ for n = 1:lengthSound
     etaNext = Iu * uNext - Iw * wNext;
 
     % String
-    kinEnergyU(n) = rhoS * AS * hS / 2 * sum((1/k * (u - uPrev)).^2);
-    potEnergyU(n) = TS / 2 * hS * sum((Dxp * [0; u]) .* (Dxp * [0; uPrev])) ...
+    kinEnergyU(n) = rhoS * A * hS / 2 * sum((1/k * (u - uPrev)).^2);
+    potEnergyU(n) = T / 2 * hS * sum((Dxp * [0; u]) .* (Dxp * [0; uPrev])) ...
         + ES * IS * hS / 2 * sum((DxxS * u) .* (DxxS * uPrev));
 
     % String damping 
-    q0U(n) = 2 * sig0S * rhoS * AS * hS * sum((1/(2*k) * (uNext - uPrev)).^2);
-    q1U(n) = - 2 * sig1S * rhoS * AS * hS * sum(1/(2*k) * (uNext - uPrev)...
+    q0U(n) = 2 * sig0S * rhoS * A * hS * sum((1/(2*k) * (uNext - uPrev)).^2);
+    q1U(n) = - 2 * sig1S * rhoS * A * hS * sum(1/(2*k) * (uNext - uPrev)...
         .* (1/k * (DxxS * u - DxxS * uPrev)));
     qTotU = qTotU + k * (q0U(idx) + q1U(idx));
 

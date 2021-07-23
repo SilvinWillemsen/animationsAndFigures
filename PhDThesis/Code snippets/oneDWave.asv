@@ -1,11 +1,8 @@
 close all;
 clear all;
 
-exc = "tri"; % excitation type (rc, imp, or tri)
-initVel = false; % give an initial velocity
-
 %% Initialise variables
-fs = 441000;         % Sample rate [Hz]
+fs = 44100;         % Sample rate [Hz]
 k = 1 / fs;         % Time step [s]
 lengthSound = fs;   % Length of the simulation (1 second) [samples]             
 
@@ -43,43 +40,27 @@ uNext = zeros(Nu+1, 1);
 u = zeros(Nu+1, 1);
 
 %% Initial conditions (raised cosine)
-if exc == "rc"
-    if bc == "D"
-        loc = round(0.5 * N);       % Center location (is correct as boundaries are excluded)
-    elseif bc == "N"
-        loc = round(0.5 * N) + 1;   % Center location + 1 (1-based matlab) (doesn't dampen the same modes due to different modal shapes)
-    end
-
-    halfWidth = round(Nu/10 - 1);    % Half-width of raised cosine
-    width = 2 * halfWidth;      % Full width
-    rcX = 0:width;              % x-locations for raised cosine
-
-    rc = 0.5 - 0.5 * cos(2 * pi * rcX / width); % raised cosine
-    u(loc-halfWidth : loc+halfWidth) = rc; % initialise current state  
-elseif exc == "imp"
-    u(loc) = 1;
-elseif exc == "tri"
-    l0 = floor(0.2 * N);
-    idx = 1;
-    eamp = 1;
-    for ll = 1:N-1 % dirichlet
-        if ll <= l0
-            u(ll) = eamp / l0 * ll;
-        else
-            u(ll) = eamp / (l0 - N) * (ll - N);
-
-        end
-        idx = idx + 1;
-    end
+if bc == "D"
+    loc = round(0.5 * N);       % Center location (is correct as boundaries are excluded)
+elseif bc == "N"
+    loc = round(0.5 * N) + 1;   % Center location + 1 (1-based matlab) (doesn't dampen the same modes due to different modal shapes)
 end
+
+% halfWidth = round(Nu/10 - 1);    % Half-width of raised cosine
+width = 2 * halfWidth;      % Full width
+rcX = 0:width;              % x-locations for raised cosine
+
+rc = 0.5 - 0.5 * cos(2 * pi * rcX / width); % raised cosine
+u(loc-halfWidth : loc+halfWidth) = rc; % initialise current state  
+uVec(loc-halfWidth : loc+halfWidth) = rc;
+% u(loc) = 1;
+% uVec(loc) = 1;
 
 % Set initial velocity to zero
-if initVel
-    uPrev = zeros(size(u));
-else
-    uPrev = u;
-end
-
+% uPrev = u;
+% uPrevVec = uVec;
+uPrev = zeros(size(u));
+uPrevVec = zeros(size(uVec));
 % Output location and scaling of boundary points for energy
 if bc == "D"
     outLoc = round(0.1 * (N-1));
@@ -121,15 +102,15 @@ for n = 1:lengthSound
     end
     totEnergy(n) = kinEnergy(n) + potEnergy(n);
     
-    out(n) = u(floor(N/2));
+    out(n) = u(outLoc);
     
-    if n == 1 || n == 101 || n == 201
+    if n == 1 || n == 5 || n == 9
         plot((0:Nu+2) / (Nu+2), [0;u;0], 'k', 'Linewidth', 1.5)
         xticks([0 1])
         xticklabels({'$0$','$N$'})
-        ylim([-1.1, 1.1])
+    %         ylim([-1.1, 1.1])
         xLab = xlabel('$l$', 'interpreter', 'latex', 'Fontsize', 16);
-%         ylim([-3, 3])
+        ylim([-3, 3])
         xLim = xlim;
         yLim = ylim;
         xLab.Position(2) = yLim(1) - 0.05 * (yLim(2) - yLim(1));

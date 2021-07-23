@@ -134,6 +134,7 @@ for mm = m
     idxY = idxY + 1;
     idxX = 1;
 end
+% discrepancy is due to the 1-based nature of matlab
 e(ms:me, ls:le) = hann(rwDisc) * hann(rwDisc)';
 
 imagesc(e)

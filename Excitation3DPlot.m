@@ -37,7 +37,7 @@ zlabel("$E_eF_e$", 'interpreter', 'latex')
 scatter3(loc - 1, 5, 0, 400, [0, 0.5, 0], '.');
 text(loc-1.2, 3.75, "$x_e$", 'Fontsize', 20, 'interpreter', 'latex', 'Color', [0, 0.5, 0]);
 plot3([loc - width / 2 - 1, loc + width / 2 - 1], [excitationLength - 3 excitationLength - 3], [0 0], 'r', 'LineWidth', 2);
-text(loc - 1.2, excitationLength - 4.25, "$w_e$", 'Fontsize', 20, 'interpreter', 'latex', 'Color', 'r');
+text(loc - 1.2, excitationLength - 4.25, "$w_z$", 'Fontsize', 20, 'interpreter', 'latex', 'Color', 'r');
 plot3([N N], [0 excitationLength], [0 0], 'b', 'LineWidth', 2);
 text(N + 50, excitationLength/2, "$d_e$", 'Fontsize', 20, 'interpreter', 'latex', 'Color', 'b');
 
