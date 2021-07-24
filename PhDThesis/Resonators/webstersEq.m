@@ -8,10 +8,10 @@ clear all;
 plotHighLosses = false; % for energyfigure
 
 % drawing variables
-drawThings = true;
+drawThings = false;
 drawSpeed = 1;
 
-impulse = true;
+impulse = false;
 impulseTest = false;
 fs = 44100;         % Sample rate (Hz)
 k = 1/fs;           % Time step (s)
@@ -48,13 +48,18 @@ amp = 0.5;
 if ~impulse  && ~impulseTest
     % input signal
     t = (0:lengthSound - 1) / fs;
-    freq = 213;
-    in = cos(2 * pi * freq * t) - 0.5;
+    freq = 100;
+    dutyC = 0.05;
+    dutyDepth = 0.5 * sin(0.5 * pi -0.5*pi * dutyC);
+    in = (sin(2 * pi * freq * t) - (1-2 * dutyDepth)) /  (2 * dutyDepth);
+    in = abs(sin(2 * pi * freq * t))- dutyDepth;
 %     in = chirp(t, 200, t(end), 800);
     in = (in + abs(in)) / 2; % subplus
 %     in = in - sum(in) / length(in);
+    plot(in)
+    xlim([0,1000])
     in = in * amp;
-    rampLength = 1000; 
+    rampLength = 0; 
     env = [linspace(0, 1, rampLength), ones(1, lengthSound - rampLength)];
 %     in = in .* env;
 %     in = in - sum(in) / length(in);
@@ -117,11 +122,11 @@ C(end, end) = -1 + alfMinus;
 % 
 plotDampingAgainstFrequency = true;
 firstPlot = true;
-plotModalAnalysis;
-figure
-scatter(1:length(s)-1, (imag(s(2:end))-imag(s(1:end-1)))/(2*pi))
-ylim([0, 100])
-drawnow
+% plotModalAnalysis;
+% figure
+% scatter(1:length(s)-1, (imag(s(2:end))-imag(s(1:end-1)))/(2*pi))
+% ylim([0, 100])
+% drawnow
 figure('Position', [440 558 367 240])
 for n = 1:lengthSound
     

@@ -10,7 +10,7 @@ f0 = 440;               % fundamental frequency [Hz]
 omega0 = 2 * pi * f0;   % angular (fundamental) frequency [Hz]
 M = 1;                  % mass [kg]
 K = omega0^2 * M;       % spring constant [N/m]
-R = 200;
+R = 50;
 
 %% initial conditions (u0 = 1, d/dt u0 = 0)
 u = 1;                  

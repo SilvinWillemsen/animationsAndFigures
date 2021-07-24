@@ -1,12 +1,13 @@
 figure('Position', [173 578 827 220])
 
-energyRangeEnd = 201;
+energyRangeEnd = 150;
 
 subp1 = subplot(1, 2, 1)
 kin = plot(0:energyRangeEnd-1, kinEnergy(1:energyRangeEnd), 'b', 'Linewidth' , 1.5);
 hold on;
 pot = plot(0:energyRangeEnd-1, potEnergy(1:energyRangeEnd), 'r', 'Linewidth', 1.5);
-tot = plot(0:energyRangeEnd-1, kinEnergy(1:energyRangeEnd) + potEnergy(1:energyRangeEnd), 'k', 'Linewidth' , 1.5);
+tube = plot(0:energyRangeEnd-1, hTube(1:energyRangeEnd), 'color', [0, 0.85, 0], 'Linewidth', 1.5);
+tot = plot(0:energyRangeEnd-1, kinEnergy(1:energyRangeEnd)' + potEnergy(1:energyRangeEnd)' + hTube(1:energyRangeEnd), 'k', 'Linewidth' , 1.5);
 
 yLim = ylim;
 ylim([yLim(1), yLim(2)*1.05])
@@ -21,7 +22,7 @@ set(gca, 'Linewidth', 1.5, 'Fontsize', 16, ...
 subplot(1, 2, 2)
 plot([0, 1], [0, 0], 'w'); % plot first so that top and right axes appear
 hold on;
-scatter(0:energyRangeEnd-1, (totEnergy(1:energyRangeEnd) - totEnergy(1)) / totEnergy(1), 60, 'k', 'Marker', '.', 'Linewidth', 1.5);
+scatter(1:energyRangeEnd-1, (totEnergy(2:energyRangeEnd) - totEnergy(2)) / totEnergy(2), 60, 'k', 'Marker', '.', 'Linewidth', 1.5);
 set(gca, 'Linewidth', 1.5, 'Fontsize', 16,...
     'Position', [0.5532 0.1500 0.4115 0.7591], ...
     'TickLabelInterpreter', 'latex')
