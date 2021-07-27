@@ -4,14 +4,14 @@ clear all;
 
 drawThings = false;
 drawEnergy = false;
-drawSpeed = 30;
+drawSpeed = 15;
 drawStart = 132300;
 plotSubplots = true;
 
 %% Initialise variables
 fs = 44100;         % Sample rate [Hz]
 k = 1 / fs;         % Time step [s]
-lengthSound = fs * 4;   % Length of the simulation (1 second) [samples]             
+lengthSound = 4 * fs;   % Length of the simulation (1 second) [samples]             
 
 % Material properties and geometry
 L = 1;              % Length [m]
@@ -24,7 +24,7 @@ T = 1000;            % Tension [N]
 
 % Damping coefficients
 sig0 = 1;         % Frequency-independent damping [s^{-1}]
-sig1 = 0.005;       % Frequency-dependent damping [m^2/s]
+sig1 = 0.005;     % Frequency-dependent damping [m^2/s]
 
 % Scheme coefficients
 c = sqrt(T / (rho * A));            % Wave speed [m/s]
@@ -50,7 +50,7 @@ N = N - 2;
 a = 100;
 BM = sqrt(2 * a) * exp(0.5);
 fB = 1;
-FB = 1/(rho * A);
+FB = 1 / (rho * A);
 vB = 0.2;
 
 Iu = zeros(1, N+1);
@@ -87,7 +87,7 @@ rc = 0.5 - 0.5 * cos(2 * pi * rcX / width); % raised cosine
 uPrev = u;
 
 % Output location
-outLoc = round(0.3 * N);
+outLoc = find(Iu~=0);
 
 %% Initialise matrices for energy
 Dxp = sparse(1:Norig, 1:Norig, -ones(1, Norig), Norig, Norig) + ...
@@ -135,10 +135,11 @@ for n = 1:lengthSound
         vRel = vRelNext;
         i = i + 1;
     end
+    iSave(n) = i;
     uNext = (B * u + C * uPrev - Ju * k^2 * FB * BM * vRel * exp(-a * vRel^2)) / Amat;
 
     % Retrieve output
-    out(n) = u(10);
+    out(n) = u(outLoc);
     
     %% Energy
     % energy in the system
@@ -170,13 +171,16 @@ for n = 1:lengthSound
             plot((0:Norig) / Norig, [0;u;0], 'k', 'Linewidth', 1.5)
             xticks([0, find(Iu ~= 0) / Norig, 1])
             xticklabels({'$0$','$x_\textrm{\fontsize{7}{7}\selectfont B}h$','$N$'})
-            if plotSubplots
+            if plotSubplots && n > 1000
                 ylim([-1.2e-3, 1.2e-3])
+                title("$n = " + (n-3*fs) + " + 3 f_\textrm{\fontsize{7}{7}\selectfont s}$", 'interpreter', 'latex', 'Fontsize', 16)
+            elseif plotSubplots
+                ylim([-1e-4, 1e-4])
+                title("$n = " + n + "$", 'interpreter', 'latex')
             end
             xLab = xlabel('$l$', 'interpreter', 'latex', 'Fontsize', 16);
             yLim = ylim;
             xLab.Position(2) = yLim(1) - (yLim(2) - yLim(1)) * 0.07;
-            title("$n = " + (n-3*fs) + " + 3 f_\textrm{\fontsize{7}{7}\selectfont s}$", 'interpreter', 'latex', 'Fontsize', 16)
             yLab = ylabel('$u_l^n$', 'interpreter', 'latex', 'Fontsize', 16);
             yLab.Position(1) = -0.06;
 
@@ -200,6 +204,10 @@ for n = 1:lengthSound
                 if fig > 6
                     return;
                 end
+            else
+                set(gca, 'Linewidth', 2, ...
+                    'ticklabelinterpreter', 'latex', 'Fontsize', 16, 'XGrid','on')
+
             end
 %             set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', ...
 %                 'Position', [0.1036 0.1396 0.8750 0.7658], 'Linewidth', 2)
@@ -217,7 +225,7 @@ for n = 1:lengthSound
     
 end
 
-% plotEnergy;
+plotEnergy;
 
 figure('Position', [173 549 786 249])
 outrange = drawStart:drawStart+1000;
@@ -234,7 +242,7 @@ yLim = ylim;
 xLim = xlim;
 grid on
 xLab2 = xlabel("$n$", 'interpreter', 'latex');
-yLab2 = ylabel("$u_{10}^n$", 'interpreter', 'latex', 'Fontsize', 20);
+yLab2 = ylabel("$u_{" + outLoc + "}^n$", 'interpreter', 'latex', 'Fontsize', 20);
 yLab2.Position(1) = xLim(1) -0.02 * (xLim(2) - xLim(1));
 xLab2.Position(2) = yLim(1) -0.15 * (yLim(2) - yLim(1));
 

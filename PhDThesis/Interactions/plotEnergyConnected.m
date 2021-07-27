@@ -1,6 +1,6 @@
 figure('Position', [173 578 827 220])
 
-energyRangeEnd = 150;
+energyRangeEnd = 101;
 if ~exist('connEnergy', 'var')
     plotConnEnergy = false;
     connEnergy = zeros(energyRangeEnd, 1);

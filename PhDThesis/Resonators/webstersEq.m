@@ -49,10 +49,7 @@ if ~impulse  && ~impulseTest
     % input signal
     t = (0:lengthSound - 1) / fs;
     freq = 100;
-    dutyC = 0.05;
-    dutyDepth = 0.5 * sin(0.5 * pi -0.5*pi * dutyC);
-    in = (sin(2 * pi * freq * t) - (1-2 * dutyDepth)) /  (2 * dutyDepth);
-    in = abs(sin(2 * pi * freq * t))- dutyDepth;
+    
 %     in = chirp(t, 200, t(end), 800);
     in = (in + abs(in)) / 2; % subplus
 %     in = in - sum(in) / length(in);

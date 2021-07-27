@@ -13,7 +13,7 @@ xe = x0 + xw/2;
 idx = 1;
 e = zeros(size(x))';
 for xx = x
-    if xx >= xs && xx < xe
+    if xx >= xs && xx <= xe
         e(idx) = 0.5 - 0.5 * cos(2*pi * ((xx)-xs) / xw);
     end
     idx = idx + 1;
@@ -21,18 +21,18 @@ end
 
 plot(x, e)
 
-%discrete
-w = 10;
+%% discrete
+w = 11;
 N = 100;
 l = 0:N;
-l0 = 41;
+l0 = 5;
 ls = l0 - floor(w/2);
 le = l0 + floor(w/2);
 E = zeros(size(l))';
 idx = 1;
 for ll = l
-    if ll >= ls && ll < le
-        E(idx) = 0.5 - 0.5 * cos(2*pi * (ll-ls) / (w-1));
+    if ll >= ls && ll <= le
+        E(idx) = 0.5 - 0.5 * cos(2*pi * (ll-ls) / w);
     end
     idx = idx + 1;
 end
@@ -92,7 +92,7 @@ idxY = 1;
 e = zeros(length(y), length(x));
 for yy = y
     for xx = x
-        if xx >= xs && xx < xe && yy >= ys && yy < ye
+        if xx >= xs && xx <= xe && yy >= ys && yy <= ye
             e(idxY, idxX) = 0.25 * (1-cos(2 * pi * (xx - xs) / rw)) * (1-cos(2 * pi * (yy - ys) / rw));   
         else
             e(idxY, idxX) = 0;
@@ -111,7 +111,7 @@ l = 0:Nx;
 m = 0:Ny;
 l0 = floor(0.3 * Nx);
 m0 = floor(0.75 * Ny);
-rwDisc = 11;
+rwDisc = 10;
 ls = l0 - floor(rwDisc/2);
 le = l0 + floor(rwDisc/2);
 ms = m0 - floor(rwDisc/2);
@@ -124,8 +124,8 @@ idxY = 1;
 
 for mm = m
     for ll = l
-        if ll >= ls && ll < le && mm >= ms && mm < me
-            e(idxY, idxX) = 0.25 * (1-cos(2 * pi * (ll - ls) / (rwDisc-1))) * (1-cos(2 * pi * (mm - ms) / (rwDisc-1)));   
+        if ll >= ls && ll <= le && mm >= ms && mm <= me
+            e(idxY, idxX) = 0.25 * (1-cos(2 * pi * (ll - ls) / rwDisc)) * (1-cos(2 * pi * (mm - ms) / rwDisc));   
         else
             e(idxY, idxX) = 0;
         end
@@ -134,7 +134,12 @@ for mm = m
     idxY = idxY + 1;
     idxX = 1;
 end
-% discrepancy is due to the 1-based nature of matlab
-e(ms:me, ls:le) = hann(rwDisc) * hann(rwDisc)';
+subplot(211)
+imagesc(e)
 
+%% using hann windows
+e = zeros(Ny-1, Nx-1);
+% discrepancy is due to the 1-based nature of matlab
+e(ms+1:me+1, ls+1:le+1) = hann(rwDisc+1) * hann(rwDisc+1)';
+subplot(212)
 imagesc(e)

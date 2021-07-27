@@ -4,7 +4,7 @@ clear all;
 fs = 44100;
 lengthSound = fs;
 k = 1/fs;
-drawThings = false;
+drawThings = true;
 drawSpeed = 1;
 plotSubplots = true;
 % initialise variables for u
@@ -109,14 +109,10 @@ for n = 1:lengthSound
         hold on;
         plot((0:Nw)/ Nw + (xcu+alphaU)/Nu - (xcw+alphaW)/Nw, [0; w; 0] - offset, ...
             'b', 'Linewidth', 2)
-        if plotNum == 1
-            legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
-                'location', 'northwest')
-        end
         plot([(xcu+alphaU), (xcu+alphaU)]/Nu, [Iu * u, Iw * w - offset], ...
             'color', [0.5, 0.5, 0.5], 'Linewidth', 2)
         if plotNum == 1
-            legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
+            legend(["$u_l^n$", "$w_m^n$"], 'interpreter', 'latex', ...
                 'location', 'northwest', 'Fontsize', 16)
         end
         ylim([-amp*0.5-offset, amp*1])

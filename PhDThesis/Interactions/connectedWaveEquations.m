@@ -5,7 +5,7 @@ fs = 44100;
 lengthSound = fs;
 k = 1/fs;
 drawThings = false;
-plotSubplots = false;
+plotSubplots = true;
 % initialise variables for u
 rhou = 7850;
 Au = pi * 0.0005^2;
@@ -41,7 +41,7 @@ uPrev = u;
 
 w = zeros(Nw-1, 1);
 startLoc = floor(Nw * 0.5) - halfWidth + 1;
-w(startLoc:startLoc+width-1) = amp * hann(width);
+% w(startLoc:startLoc+width-1) = amp * hann(width);
 wPrev = w;
 
 Dxxu = 1/hu^2 * toeplitz([-2, 1, zeros(1, Nu-3)]);
@@ -98,12 +98,12 @@ B = B + [-Ju ; Jw] * fVec;
 Amat = speye(size(B));
 C = -speye(size(B));
 
-plotModalAnalysis;
+% plotModalAnalysis;
 %% Main Loop
 for n = 1:lengthSound
     f = (cu^2 * Iu * Dxxu * u - cw^2 * Iw * Dxxw * w) / (Iu * Ju / (rhou * Au) + Iw * Jw / (rhow * Aw));
-    uNext = Bu * u - uPrev;% - Ju * k^2 / (rhou*Au) * f;
-    wNext = Bw * w - wPrev;% + Jw * k^2 / (rhow*Aw) * f;
+    uNext = Bu * u - uPrev - Ju * k^2 / (rhou*Au) * f;
+    wNext = Bw * w - wPrev + Jw * k^2 / (rhow*Aw) * f;
    
     uwNext = B * uw - uwPrev;
     
@@ -129,14 +129,11 @@ for n = 1:lengthSound
         hold on;
         plot((0:Nw)/ Nw + (xcu+alphaU)/Nu - (xcw+alphaW)/Nw, [0; w; 0] - offset, ...
             'b', 'Linewidth', 2)
-        if plotNum == 1
-            legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
-                'location', 'northwest')
-        end
+
         plot([(xcu+alphaU), (xcu+alphaU)]/Nu, [Iu * u, Iw * w - offset], ...
             'color', [0.5, 0.5, 0.5], 'Linewidth', 2)
         if plotNum == 1
-            legend(["$u_{l_u}^n$", "$w_{l_w}^n$"], 'interpreter', 'latex', ...
+            legend(["$u_l^n$", "$w_m^n$"], 'interpreter', 'latex', ...
                 'location', 'northwest', 'Fontsize', 16)
         end
         ylim([-amp * 0.5-offset, amp * 1])

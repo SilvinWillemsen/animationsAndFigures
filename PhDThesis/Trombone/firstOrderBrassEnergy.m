@@ -7,16 +7,17 @@ close all;
 
 % drawing variables
 drawThings = true;
-drawSpeed = 10;
+drawSpeed = 1000;
 drawStart = 0;
 centered = true;
 radiation = true;
-plotEnergy = false;
+plotEnergy = true;
 plotSubplots = false;
 fs = 44100;             % Sample rate (Hz)
 k = 1/fs;               % Time step (s)
-lengthSound = 1000;   % Duration (s)
+lengthSound = fs;   % Duration (s)
 
+connectedToLip = true;
 %% viscothermal effects
 T = 26.85;
 [c, rho, eta, nu, gamma] = calcThermoDynConstants (T);
@@ -31,8 +32,8 @@ h = L/N;                % Recalculate gridspacing from number of points
 lambda = c * k / h      % courant number
 
 %% Lip Collision
-Kcol = 10000;
-alfCol = 1; 
+Kcol = 100000;
+alfCol = 3; 
 LnonExtended = 2.593;
 NnonExtended = LnonExtended / h;
 
@@ -148,44 +149,45 @@ for n = 1:lengthSound
 %     end
 %     Pm = 0;
     %% Collision
-    barr = -H0;
-    etaC = barr - y;
-    g = 0;
-    if alfCol == 1
-        if etaC > 0
-            g = sqrt(Kcol * (alfCol+1) / 2);
+    if connectedToLip
+        %% Collision
+        barr = -H0;
+        etaC = barr - y;  
+        etaCPrev = barr - yPrev;
+
+        g = 0;
+        calcLipDisp; % calculate yNext without collision
+        etaCNext = barr - yNext(n);
+        
+        if psiPrev < 0
+            kappaLip = -1;
+        else
+            kappaLip = 1;
         end
+
+        if etaC >= 0
+            g = kappaLip * sqrt(Kcol * (alfCol+1) / 2) * subplus (etaC)^((alfCol - 1.0) / 2.0);
+        else
+            if(etaCNext - etaCPrev ~= 0)
+                g = -2 * psiPrev / (etaCNext - etaCPrev);
+            else 
+                disp("DIVISION BY 0");
+            end
+        end
+
+        calcLipDisp; % calculate yNext with collision
+
+        %% Update collision potential
+        psi = psiPrev - 0.5 * g * (yNext(n) - yPrev);
+
+        %% Calculate flow velocities
+        Ub = w * subplus(y + H0) * sign(deltaP) * sqrt(2 * abs(deltaP)/rho);
+        Ur = Sr * 1/(2*k) * (yNext(n) - yPrev);
     else
-        g = sqrt(Kcol * (alfCol+1) / 2) * subplus(etaC)^((alfCol - 1)/2);
+        Ub = 0;
+        Ur = 0;
     end
     
-    %% Obtain deltaP
-    a1 = 2 / k + omega0^2 * k + sig + g^2 * k / (2 * M);
-    a2 = Sr / M;
-    a3 = 2/k * 1/k * (y - yPrev) - omega0^2 * yPrev + g / M * psiPrev;
-    b1 = SHalf(1) * vNext(1) + h * SBar(1) / (rho * c^2 * k) * (Pm  - p(1));
-    b2 = h * SBar(1) / (rho * c^2 * k);
-    c1 = w * subplus(y + H0) * sqrt(2 / rho);
-    c2 = b2 + a2 * Sr / a1;
-    c3 = b1 - a3 * Sr / a1;
-    
-    deltaP = sign(c3) * ((-c1 + sqrt(c1^2 + 4 * c2 * abs(c3)))/ (2 * c2))^2;
-    
-    %% Update lip scheme
-    gammaR = g * k^2 / (2 * M);
-    alpha = 2 + omega0^2 * k^2 + sig * k + g * gammaR;
-    beta = sig * k - 2 - omega0^2 * k^2 + g * gammaR;
-    xi = 2 * Sr * k^2 / M;
-
-    yNext(n) = 4 / alpha * y + beta / alpha * yPrev + xi / alpha * deltaP + 4 * gammaR * psiPrev / alpha;
-
-    %% Update collision potential
-    psi = psiPrev - 0.5 * g * (yNext(n) - yPrev);
-    
-    %% Calculate flow velocities
-    Ub = w * subplus(y + H0) * sign(deltaP) * sqrt(2 * abs(deltaP)/rho);
-    Ur = Sr * 1/(2*k) * (yNext(n) - yPrev);
-
     %% Calculate pressure
     pNext(pRange) = p(pRange) - rho * c * lambda ./ SBar(pRange) .* (SHalf(pRange) .* vNext(pRange) - SHalf(pRange-1) .* vNext(pRange-1));
     pNext(1) = p(1) - rho * c * lambda / SBar(1) .* (-2 * (Ub + Ur) + 2 * SHalf(1) * vNext(1));

@@ -1,11 +1,11 @@
 close all;
 clear all;
 
-exc = "tri"; % excitation type (rc, imp, or tri)
+exc = "rc"; % excitation type (rc, imp, or tri)
 initVel = false; % give an initial velocity
 
 %% Initialise variables
-fs = 441000;         % Sample rate [Hz]
+fs = 44100;         % Sample rate [Hz]
 k = 1 / fs;         % Time step [s]
 lengthSound = fs;   % Length of the simulation (1 second) [samples]             
 
@@ -52,10 +52,10 @@ if exc == "rc"
 
     halfWidth = round(Nu/10 - 1);    % Half-width of raised cosine
     width = 2 * halfWidth;      % Full width
-    rcX = 0:width;              % x-locations for raised cosine
+    rcX = 0:width-1;              % x-locations for raised cosine
 
-    rc = 0.5 - 0.5 * cos(2 * pi * rcX / width); % raised cosine
-    u(loc-halfWidth : loc+halfWidth) = rc; % initialise current state  
+    rc = 0.5 - 0.5 * cos(2 * pi * rcX / (width - 1)); % raised cosine
+    u(loc-halfWidth : loc+halfWidth-1) = rc; % initialise current state  
 elseif exc == "imp"
     u(loc) = 1;
 elseif exc == "tri"
@@ -123,7 +123,7 @@ for n = 1:lengthSound
     
     out(n) = u(floor(N/2));
     
-    if n == 1 || n == 101 || n == 201
+    if n == 1 || n == 6 || n == 11
         plot((0:Nu+2) / (Nu+2), [0;u;0], 'k', 'Linewidth', 1.5)
         xticks([0 1])
         xticklabels({'$0$','$N$'})

@@ -6,13 +6,13 @@ Fs = 44100;     % Sampling rate
 
 %% Drawing functions
 drawString = true;
-drawStart = 3*Fs;
+drawStart = Fs;
 drawspeed = 10;
-drawEnergy = false;
-hysteresis = true;
+drawEnergy = false; 
+hysteresis = false;
 
 %% Choose bow model (elastoPlastic, simple, hyperbolic, cos (raised cosine))
-bowModel = "elastoPlastic";
+bowModel = "cos";
 if bowModel ~= "elastoPlastic"
 %     drawString = false;
 end
@@ -103,7 +103,7 @@ if bowModel == "elastoPlastic"
     
     z_ba=0.7*fc/sig0;    % break-away displacement (has to be < f_c/sigma_0!!)
     
-    VbInit = 0.1;
+    VbInit = 0.2;
     zPrev = 0;
     z = 0;
     tol = 1e-7;
@@ -426,6 +426,7 @@ for t = 1 : lengthSound
     potEnergy(t) = T / 2 * 1/h * sum((u(3:N) - u(2:N-1)) .* (uPrev(3:N) - uPrev(2:N-1)))...
         + E * Iner / 2 * 1/h^3 * sum((u(eVec+1) - 2 * u(eVec) + u(eVec-1)) ...
         .* (uPrev(eVec+1) - 2 * uPrev(eVec) + uPrev(eVec-1)));
+    
     totEnergy(t) = kinEnergy(t) + potEnergy(t);
     
     
@@ -460,72 +461,72 @@ for t = 1 : lengthSound
             text(floor(bp*N) - 2, 0, "$V_B =$ " + num2str(Vb, 2), 'interpreter', 'latex', 'horizontalAlignment', 'right');
             title("String displacement at sample " + num2str(t), 'interpreter', 'latex','Fontsize', 16)
             subplot(4,1,2);
-            plot(iSave(1:t))
+%             plot(iSave(1:t))
             %             if t > drawStart + 100*drawspeed + 1
             %                 plot(out3(t-100*drawspeed:t-1));
             %             end
             if hysteresis == false
                 %% Steady State Curve
-                subplot(2,4,5)
-                plot(vRelVec, zssVec)
-                hold on;
-                zssVecVal = find (round(vRelVec * 1e3) == round(Vrel * 1e3));
-                if length(zssVecVal) == 1
-                    zssVecPlotVal = zssVecVal;
-                end
-                scatter(round(Vrel * 1e3)*1e-3, zssVec(zssVecPlotVal));
-                text(round(Vrel * 1e3)*1e-3, zssVec(zssVecPlotVal) - 1.5e-4, "$v =$ " + num2str(Vrel, 2), 'interpreter', 'latex', 'horizontalAlignment', 'center');
-                xlim([-0.5 0.5])
-                
-                xlabel('$v$','interpreter', 'latex')
-                ylabel("$z_{ss}(v)$", 'interpreter', 'latex')
-                title('Steady-state curve $z_{ss}(v)$', 'interpreter', 'latex', 'Fontsize', 16)
-                
-                %% Adhesion Map
-                subplot(2,4,6)
-                alphaPlot = zeros(length(zVec),1);
-                zssPlot = abs(zss);
-                for ii = 1:length(zVec)
-                    if sign(zVec(ii)) == sign(zss)
-                        if ((abs(zVec(ii))>z_ba) && (abs(zVec(ii))<zssPlot))
-                            arg=pi*(zVec(ii)-sign(zVec(ii))*0.5*(zssPlot+z_ba))/(zssPlot-z_ba);
-                            sinarg=sin(sign(zVec(ii))*arg);
-                            alphaPlot(ii)=0.5*(1+sinarg);
-                        elseif (abs(zVec(ii))>=zssPlot)
-                            alphaPlot(ii)=1;
-                        end
-                    end
-                end
-                plot(zVec, alphaPlot);
-                text(zss + 5e-5, 0.5, '$z_{ss}(v)$', 'interpreter', 'latex', 'horizontalAlignment', 'center')
-                
-                hold on;
-                
-                plot([zss zss], [min(ylim) max(ylim)], '--');
-                %                 alphaIdx = find(round(zVec*1e7) == floor(1e7*z));
-                %                 if length(alphaIdx) == 1
-                scatter(z, alpha);
-                %                     text(floor(1e5*z)*1e-5+3e-5, alphaPlot(alphaIdx) - 0.05, '$z$', 'interpreter', 'latex', 'horizontalAlignment', 'center');
-                %                 end
-                %         title('$\alpha$','interpreter', 'latex', 'Fontsize', 18)
-                xlabel('$z$','interpreter', 'latex')
-                ylabel('$\alpha(v,z)$','interpreter', 'latex')
-                title('Adhesion map $\alpha(v,z)$', 'interpreter', 'latex', 'Fontsize', 16)
-                
-                %% Velocity of Mean Bristle Displacement
-                subplot(2,4,7)
-                plot(zDotSave(1:t))
-                xlabel('$n$ (samples)','interpreter', 'latex')
-                ylabel("$\dot z$", 'interpreter', 'latex')
-                title('Velocity of the mean bristle displacement', 'interpreter', 'latex', 'Fontsize', 16)
-                
-                %% Mean Bristle Displacement
-                subplot(2,4,8)
-                plot(zSave(1:t))
-                title("$z$", 'interpreter', 'latex')
-                xlabel('$n$ (samples)','interpreter', 'latex')
-                ylabel("$z$", 'interpreter', 'latex')
-                title('Mean bristle displacement $z$', 'interpreter', 'latex', 'Fontsize', 16)
+%                 subplot(2,4,5)
+%                 plot(vRelVec, zssVec)
+%                 hold on;
+%                 zssVecVal = find (round(vRelVec * 1e3) == round(Vrel * 1e3));
+%                 if length(zssVecVal) == 1
+%                     zssVecPlotVal = zssVecVal;
+%                 end
+%                 scatter(round(Vrel * 1e3)*1e-3, zssVec(zssVecPlotVal));
+%                 text(round(Vrel * 1e3)*1e-3, zssVec(zssVecPlotVal) - 1.5e-4, "$v =$ " + num2str(Vrel, 2), 'interpreter', 'latex', 'horizontalAlignment', 'center');
+%                 xlim([-0.5 0.5])
+%                 
+%                 xlabel('$v$','interpreter', 'latex')
+%                 ylabel("$z_{ss}(v)$", 'interpreter', 'latex')
+%                 title('Steady-state curve $z_{ss}(v)$', 'interpreter', 'latex', 'Fontsize', 16)
+%                 
+%                 %% Adhesion Map
+%                 subplot(2,4,6)
+%                 alphaPlot = zeros(length(zVec),1);
+%                 zssPlot = abs(zss);
+%                 for ii = 1:length(zVec)
+%                     if sign(zVec(ii)) == sign(zss)
+%                         if ((abs(zVec(ii))>z_ba) && (abs(zVec(ii))<zssPlot))
+%                             arg=pi*(zVec(ii)-sign(zVec(ii))*0.5*(zssPlot+z_ba))/(zssPlot-z_ba);
+%                             sinarg=sin(sign(zVec(ii))*arg);
+%                             alphaPlot(ii)=0.5*(1+sinarg);
+%                         elseif (abs(zVec(ii))>=zssPlot)
+%                             alphaPlot(ii)=1;
+%                         end
+%                     end
+%                 end
+%                 plot(zVec, alphaPlot);
+%                 text(zss + 5e-5, 0.5, '$z_{ss}(v)$', 'interpreter', 'latex', 'horizontalAlignment', 'center')
+%                 
+%                 hold on;
+%                 
+%                 plot([zss zss], [min(ylim) max(ylim)], '--');
+%                 %                 alphaIdx = find(round(zVec*1e7) == floor(1e7*z));
+%                 %                 if length(alphaIdx) == 1
+%                 scatter(z, alpha);
+%                 %                     text(floor(1e5*z)*1e-5+3e-5, alphaPlot(alphaIdx) - 0.05, '$z$', 'interpreter', 'latex', 'horizontalAlignment', 'center');
+%                 %                 end
+%                 %         title('$\alpha$','interpreter', 'latex', 'Fontsize', 18)
+%                 xlabel('$z$','interpreter', 'latex')
+%                 ylabel('$\alpha(v,z)$','interpreter', 'latex')
+%                 title('Adhesion map $\alpha(v,z)$', 'interpreter', 'latex', 'Fontsize', 16)
+%                 
+%                 %% Velocity of Mean Bristle Displacement
+%                 subplot(2,4,7)
+%                 plot(zDotSave(1:t))
+%                 xlabel('$n$ (samples)','interpreter', 'latex')
+%                 ylabel("$\dot z$", 'interpreter', 'latex')
+%                 title('Velocity of the mean bristle displacement', 'interpreter', 'latex', 'Fontsize', 16)
+%                 
+%                 %% Mean Bristle Displacement
+%                 subplot(2,4,8)
+%                 plot(zSave(1:t))
+%                 title("$z$", 'interpreter', 'latex')
+%                 xlabel('$n$ (samples)','interpreter', 'latex')
+%                 ylabel("$z$", 'interpreter', 'latex')
+%                 title('Mean bristle displacement $z$', 'interpreter', 'latex', 'Fontsize', 16)
             else
                 %                 figure('Renderer', 'painters', 'Position', [100 100 800 350])
                 subplot(1,1,1)
@@ -592,7 +593,7 @@ for t = 1 : lengthSound
     uPrev = u;
     u = uNext;
 end
-
+%%
 figure('Position', [173 549 786 249])
 outrange = 3*Fs:3*Fs+1000;
 plot(outrange, out1(outrange), 'k', 'Linewidth', 2)
@@ -604,14 +605,14 @@ plot(outrange, out1(outrange), 'k', 'Linewidth', 2)
 
 % ylim([-1.5e-4, 1.5e-4])
 xlim([outrange(1), outrange(end)])
-ylim([-5e-5, 15e-5])
+ylim([-1.5e-4, 2.5e-4])
 yLim = ylim;
 xLim = xlim;
 grid on
 xLab2 = xlabel("$n$", 'interpreter', 'latex');
-yLab2 = ylabel("$u_{10}^n$", 'interpreter', 'latex', 'Fontsize', 20);
+yLab2 = ylabel("$u_{" + pickup1 + "}^n$", 'interpreter', 'latex', 'Fontsize', 20);
 yLab2.Position(1) = xLim(1) -0.02 * (xLim(2) - xLim(1));
-xLab2.Position(2) = yLim(1) -0.15 * (yLim(2) - yLim(1));
+xLab2.Position(2) = yLim(1) -0.12 * (yLim(2) - yLim(1));
 
 % xticks(0:0.02:0.1)
 set(gca, 'Linewidth', 1.5, 'Fontsize', 16,...
