@@ -138,8 +138,25 @@ subplot(211)
 imagesc(e)
 
 %% using hann windows
-e = zeros(Ny-1, Nx-1);
-% discrepancy is due to the 1-based nature of matlab
-e(ms+1:me+1, ls+1:le+1) = hann(rwDisc+1) * hann(rwDisc+1)';
-subplot(212)
-imagesc(e)
+% e = zeros(Ny-1, Nx-1);
+% % discrepancy is due to the 1-based nature of matlab
+% e(ms+1:me+1, ls+1:le+1) = hann(rwDisc+1) * hann(rwDisc+1)';
+% subplot(212)
+figure('Position', [489 604 578 253])
+view(20,35);
+surf(hann(50) * hann(50)')
+colormap gray;
+caxis([-0.5, 1]);
+box on
+xticks([])
+yticks([])
+zticks([])
+set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', 'Linewidth', 1.5, ...
+    'Position', [0.0700 0.1100 0.9250 0.8150])
+
+yLab = ylabel('$l$', 'interpreter', 'latex');
+% yLab.Position = [24.9123143849772,-3.42032538420517,-0.049501856347039];
+
+xLab = xlabel('$m$', 'interpreter', 'latex');
+% xLab.Position = [51.9344402355818,30.6832563101389,-0.01185608391491];
+zlabel('$E_{(l,m), \textrm{\fontsize{7}{7}\selectfont rc}}$', 'interpreter', 'latex')

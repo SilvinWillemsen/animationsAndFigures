@@ -7,7 +7,7 @@ k = 1 / fs;         % Time step [s]
 lengthSound = fs;   % Length of the simulation (1 second) [samples]             
 
 %% Plotting
-drawThings = false;     % Plot or not
+drawThings = true;     % Plot or not
 drawSpeed = 10;         % 
 plotSubplots = false;
 calcEnergy = true;

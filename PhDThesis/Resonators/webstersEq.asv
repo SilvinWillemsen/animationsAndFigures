@@ -11,7 +11,7 @@ plotHighLosses = false; % for energyfigure
 drawThings = false;
 drawSpeed = 1;
 
-impulse = true;
+impulse = false;
 impulseTest = false;
 fs = 44100;         % Sample rate (Hz)
 k = 1/fs;           % Time step (s)
@@ -22,11 +22,11 @@ if plotHighLosses
 else
     L = 3;
 end
-c = 351;            % Wave speed (m/s)
+c = 343;            % Wave speed (m/s)
 h = c * k;          % Grid spacing (m)
 
 N = floor(L/h);             % Number of points (-)
-% L = N * h;
+L = N * h;
 h = L/N;                    % Recalculate gridspacing from number of points
 lambdaSq = (c * k / h)^2    % Courant number
 
@@ -51,16 +51,16 @@ if ~impulse  && ~impulseTest
     freq = 100;
     
 %     in = chirp(t, 200, t(end), 800);
-    f = 213;                % Pulse train frequency
-    dutyC = 0.5;           % Duty cycle [0-1]
+    f = 440;                % Pulse train frequency
+    dutyC = 1;           % Duty cycle [0-1]
     amp = 1;                % Amplitude
 
     %% Create input signal
     for n = 0:lengthSound
         if mod(n, fs / f) <= fs / f * dutyC
-            in(n+1) = amp *sin(f * pi / dutyC * mod(n, fs / f) / fs);
+            vIn(n+1) = amp *sin(f * pi / dutyC * mod(n, fs / f) / fs);
         else
-            in(n+1) = 0;
+            vIn(n+1) = 0;
         end
     end
     in = (in + abs(in)) / 2; % subplus
