@@ -1,25 +1,34 @@
 % close all;
 % clear all;
-drawThings = true;
+drawThings = false;
 drawEnergy = false;
 drawSpeed = 1;
 
 %% Initialise variables
 fs = 44100;         % Sample rate [Hz]
 k = 1 / fs;         % Time step [s]
-lengthSound = 200;   % Length of the simulation (1 second) [samples]             
+lengthSound = fs;   % Length of the simulation (1 second) [samples]             
 % tSave = zeros(1001,1);
 % tSaveIdx = 1;
 % for tens = 1000:2000
-
+firstParams = false;
 % Material properties and geometry
 L = 1;              % Length [m]
-r = 5e-4;           % Radius [m]
+if firstParams
+    r = 5e-4;           % Radius [m]
+    E = 2e14;           % Young's modulus [Pa]
+    T = 1885
+else
+%     r = 9.35e-4;
+%     E = 2e11;           % Young's modulus [Pa]
+%     T = 3951;     % Tension [N]
+    r = 1.58e-2;
+    E = 2e11;
+    T = 1.88e+06;
+end
 A = pi * r^2;       % Cross-sectional area [m^2] (circular cross-section)
 rho = 7850;         % Material density [kg / m^3]
-E = 2e11;           % Young's modulus [Pa]
 I = pi * r^4 / 4;   % Area moment of inertia [m^4]
-T = 1000;            % Tension [N]
 
 % Damping coefficients
 sig0 = 1;         % Frequency-independent damping [s^{-1}]
@@ -29,6 +38,9 @@ sig1 = 0.005;       % Frequency-dependent damping [m^2/s]
 c = sqrt(T / (rho * A));            % Wave speed [m/s]
 kappa = sqrt(E * I / (rho * A));    % Stiffness coefficient [m^2/s]
 
+% r = sqrt(4 * kappa^2 * rho / 2e11);
+% T = c^2 * rho * pi * r^2;
+%     
 % Grid spacing and number of intervals
 h = sqrt(1/2 * (c^2*k^2 + 4*sig1*k ...
     + sqrt((c^2*k^2 + 4*sig1*k)^2 + 16*kappa^2*k^2)));
@@ -77,9 +89,14 @@ elseif bc == "f"
     Dxxxx(end,end-2:end) = [2, -4, 2] / h^4;
 end
 
-Amat = (1 + sig0 * k);
-B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx + 2 * sig1 * k * Dxx;
+% Amat = (1 + sig0 * k);
+% B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx + 2 * sig1 * k * Dxx;
+% C = -(1 - sig0 * k) * Id - 2 * sig1 * k * Dxx;
+
+Amat = (1 + sig0 * k) * Id -  2 * sig1 * k * Dxx;
+B = 2 * Id + c^2 * k^2 * Dxx - kappa^2 * k^2 * Dxxxx;
 C = -(1 - sig0 * k) * Id - 2 * sig1 * k * Dxx;
+
 
 %% Initial conditions (raised cosine)
 ratio = 0.3;
@@ -130,7 +147,7 @@ potEnergy = zeros(lengthSound, 1); % potential energy
 totEnergy = zeros(lengthSound, 1); % hamiltonian (total energy)
 qTot = 0;
 
-% plotModalAnalysis;
+plotModalAnalysis;
 
 if drawThings
     %initialise figure

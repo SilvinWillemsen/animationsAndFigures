@@ -2,7 +2,6 @@
     Implementation of the damped stiff string including an energy analysis. 
     This implementation accompanies the PhD Thesis: "The Emulated Ensemble" 
     by Silvin Willemsen (more specifically Chapter 4).
-
     CC 3.0 Silvin Willemsen 2021.
 %}
 
@@ -13,11 +12,30 @@ clear all;
 drawThings = false;
 drawEnergy = false; % Either plot the normalised energy or the string state
 drawSpeed = 1;
+if drawThings
+    recordVid = true;
+else
+    recordVid = false;
+end
 
 %% Initialise variables
 fs = 44100;         % Sample rate [Hz]
 k = 1 / fs;         % Time step [s]
-lengthSound = fs;   % Length of the simulation (1 second) [samples]             
+if recordVid
+    lengthSound = 400 * fs / 44100;   % Length of the simulation (1 second) [samples]             
+else
+    lengthSound = fs;
+end
+
+if drawThings
+    figure('Position', [489 644 560 213])
+    if recordVid
+        slowdown = 1;
+        loops = lengthSound * slowdown;
+        M(loops) = struct('cdata',[],'colormap',[]);
+        frame = 1;
+    end
+end
 
 % Material properties and geometry
 L = 1;              % Length [m]
@@ -29,12 +47,12 @@ I = pi * r^4 / 4;   % Area moment of inertia [m^4]
 T = 300;           % Tension [N]
 
 % Damping coefficients
-sig0 = 0;         % Frequency-independent damping [s^{-1}]
-sig1 = 0.000;       % Frequency-dependent damping [m^2/s]
+sig0 = 2;         % Frequency-independent damping [s^{-1}]
+sig1 = 0.005;       % Frequency-dependent damping [m^2/s]
 
 % Scheme coefficients
 c = sqrt(T / (rho * A));            % Wave speed [m/s]
-c = 300;
+c = 220.5;
 kappa = sqrt(E * I / (rho * A));    % Stiffness coefficient [m^2/s]
 
 % Grid spacing and number of intervals
@@ -93,20 +111,41 @@ BoverA = B / Acoeff;
 CoverA = C / Acoeff;
 
 %% Initial conditions (raised cosine)
-ratio = 0.3;
-loc = floor(ratio * N);       % Center location
-halfWidth = round(N/20);    % Half-width of raised cosine
+temporalExcitation = false;
+
+ratio = 0.2;
+loc = floor(ratio * (Norig+1));       % Center location
+halfWidth = floor((Norig+1) / 20);    % Half-width of raised cosine
 width = 2 * halfWidth;      % Full width
 rcX = 0:width;              % x-locations for raised cosine
-
 rc = 0.5 - 0.5 * cos(2 * pi * rcX / width); % raised cosine
-% u(loc-halfWidth : loc+halfWidth) = 1.1 * rc;
-u(1) = 1;
+    f = zeros(lengthSound, 1);
+
+if temporalExcitation
+    pluck = true;
+    excitationLength = 30; %samples
+    if pluck
+        q = 1;
+        excitationLength = excitationLength / 2;
+    else
+        q = 2;
+    end
+    f(1:excitationLength) = 0.01 - 0.01 * cos(q * pi * (1:excitationLength) / excitationLength);
+
+end
+
+
+excitation = zeros(length(u), 1);
+% excitation(loc) = 1;
+excitation(loc-halfWidth : loc+halfWidth) = rc;
+if ~temporalExcitation
+    u = excitation;
+end
 % Set initial velocity to zero
 uPrev = u;
 
 % Output location
-outLoc = 1;
+outLoc = round(0.85 * (N+1));
 
 %% Initialise matrices for energy
 if bc == 'c'
@@ -150,7 +189,7 @@ out = zeros(lengthSound, 1);
 for n = 1:lengthSound
         
     % Update equation 
-    uNext = BoverA * u + CoverA * uPrev;
+    uNext = BoverA * u + CoverA * uPrev + temporalExcitation * f(n) * excitation;
     
     % Retrieve output
     out(n) = u(outLoc);
@@ -228,18 +267,20 @@ for n = 1:lengthSound
             end
 
             % plot string
+            hold off;
             plot((0:Norig), uPlot, 'k', 'Linewidth', 1.5)
-
+%             hold on;
+%             scatter(outLoc-1, uPlot(outLoc), 80, 'r', 'Marker', 'o', 'Linewidth', 2)
             % plot settings
             xlim([0, Norig])
-            ylim([-1.1, 1.1])
+            ylim([-1, 1])
 
             xticks([0 Norig])
             xticklabels({'$0$','$N$'})
 
             xlabel('$l$', 'interpreter', 'latex')
             ylabel('$u_l^n$', 'interpreter', 'latex')
-            title("String state")
+%             title("String state")
 
             set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', 'Linewidth', 2)
 
@@ -250,11 +291,49 @@ for n = 1:lengthSound
             set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', 'Linewidth', 2)
 
         end
+        set(gca, 'Position', [0.0125 0.0188 0.9768 0.9577])
+        set(gcf, 'color', 'w')
+        axis off
         drawnow;
+        for j = 1:slowdown
+            M(frame) = getframe (gcf);
+            frame = frame + 1;
+        end
     end
     
     %% Update system states
     uPrev = u;
     u = uNext;
     
+end
+%%
+
+if recordVid
+    while isempty(M(end).cdata)
+        M(end) = [];
+    end
+    v = VideoWriter('stiffStringHighStiffness.mp4', 'MPEG-4');
+    open(v)
+    writeVideo(v, M);
+    close(v)
+else
+    figure('Position', [173 578 507 220])
+
+    t = (1:lengthSound)/fs;
+    plot(t, out, 'k', 'Linewidth', 1.5)
+
+
+    ylim([-0.6, 0.6]);
+    yLim = ylim;
+    xLab = xlabel("$t$", 'interpreter', 'latex');
+    yLab = ylabel("$u_{\fontsize{7}{7}\selectfont\textrm{out}}^n$", 'interpreter', 'latex');
+
+    xLab.Position(2) = yLim(1) - (yLim(2) - yLim(1)) * 0.15;
+    xLim = xlim;
+    yLab.Position(1)  = xLim(1) -0.05 * (xLim(2) - xLim(1));
+    % grid on;
+
+    set(gca, 'Linewidth', 1.5, 'Fontsize', 16, ...
+        'Position', [0.0871 0.2000 0.8875 0.7250], ...
+        'TickLabelInterpreter', 'latex')
 end

@@ -6,8 +6,8 @@ fs = 44100;
 k = 1/fs;
 
 plotDiscrete = false;
-lengthSound = 300;
-slowDown = 3; % amount of frames per system state (min 1) 
+lengthSound = 600;
+slowDown = 2; % amount of frames per system state (min 1) 
 
 c = 1470/10;
 h = c*k;
@@ -20,7 +20,7 @@ lambdaSq = (c*k/h)^2;
 uNext = zeros(N+1, 1);
 u = zeros(N+1, 1);
 
-widthU = 101;
+widthU = 71;
 
 halfWidthU = floor(widthU/2);
 
@@ -30,7 +30,8 @@ uPrev = u;
 recordVid = true;
 
 if recordVid
-    M(lengthSound * slowDown) = struct('cdata',[],'colormap',[]);
+    loops = lengthSound * slowDown;
+    M(loops) = struct('cdata',[],'colormap',[]);
     frame = 1;
 end
 
@@ -50,19 +51,19 @@ for n = 1:lengthSound
             plot((0:N) / N, u, 'k', 'Linewidth', 2);
             xlabel('$x$ (m)', 'interpreter', 'latex')
             ylabel("$u(x,t)$", 'interpreter', 'latex')
-            title("$t = " + num2str(round(10000*n/fs) / 10) + "$ ms", 'interpreter', 'latex')
+%             title("$t = " + num2str(round(10000*n/fs) / 10) + "$ ms", 'interpreter', 'latex')
 
         end
         ylim([-1, 1])
 
     %     grid on;
         set(gca, 'Linewidth', 2, 'Fontsize', 16)
-        set(gcf, 'color', 'w')
+        set(gcf, 'color', [1, 1, 1, 0])
     
         j = 1;
         for i = 0:5:N
             if i ~= 0 && i ~= N
-                curv(j) = (u(i+1) - 2 * u(i) + u(i-1)) * 200;
+                curv(j) = (u(i+1) - 2 * u(i) + u(i-1)) * 100;
                 if curv(j) ~= 0
                     color = [curv(j) + 0.5, 1-(abs(curv(j)) + 0.5), 1-(curv(j)+0.5)];
                     myArrow([i / N, i / N], [0, curv(j)*1] + u(i), 10 * abs(curv(j)), 20 * abs(curv(j)), 20 * abs(curv(j)), color);
@@ -70,7 +71,7 @@ for n = 1:lengthSound
                 j = j+1;
             end
         end
-
+        axis off
         drawnow;
         if recordVid
             for i = 1:slowDown
@@ -85,7 +86,9 @@ for n = 1:lengthSound
 
 end
 if recordVid
-    M = M(1:n-1);
+    while isempty(M(end).cdata)
+        M(end) = [];
+    end
     v = VideoWriter('curvature1DWave.mp4', 'MPEG-4');
     open(v)
     writeVideo(v, M);

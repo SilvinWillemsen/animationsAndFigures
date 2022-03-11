@@ -45,11 +45,12 @@ if firstPlot
     plot(0, 0)
 end
 hold on
-scatter(imag(s)/(2*pi), imag(s)/(2*pi), color, 'Linewidth', 2)
+scatter(1:length(s), imag(s)/(2*pi), color, 'Linewidth', 2)
 grid on
 xlabel("Mode number $p$", 'interpreter', 'latex')
 ylabel("$f_p$ [Hz]", 'interpreter', 'latex')
-% xlim([1, length(s)])
+
+xlim([1, length(s)])
 title("Modal frequency")
 set(gca, 'Fontsize', 16, 'Linewidth', 2, 'FontName', 'times', ...
         'Position', plot1Pos)
@@ -57,7 +58,7 @@ set(gca, 'Fontsize', 16, 'Linewidth', 2, 'FontName', 'times', ...
 if ~noDamping
     subplot(122)
     if firstPlot
-        color = 'b';
+        color = 'k';
     else
         color = 'r';
     end
@@ -72,6 +73,8 @@ if ~noDamping
     else
         scatter(1:length(s), real(s), color, 'Linewidth', 2)
         xlabel("Mode number $p$", 'interpreter', 'latex')
+        xlim([1, length(s)])
+
     end
     grid on
     % xlim([1, length(s)])

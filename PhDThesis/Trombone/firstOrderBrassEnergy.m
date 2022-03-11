@@ -111,7 +111,7 @@ etaC = 0;
 
 %% Radiation impedance
 R1 = rho * c;
-rL = sqrt(SBar(N+1)) / (2 * pi);
+rL = sqrt(SBar(N+1)/pi);
 Lr = 0.613 * rho * rL;
 R2 = 0.505 * rho * c;
 Cr = 1.111 * rL / (rho * c^2); 

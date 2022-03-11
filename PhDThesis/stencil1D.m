@@ -23,7 +23,7 @@ set(gca,'xtick',[1:5],'xticklabel', Xnames, 'FontSize', 18)
 set(gca,'ytick',[1:5],'yticklabel', Ynames, 'FontSize', 18) 
 
 coords = cell(3, 1);
-spatialSteps = [3, 5, 3];
+spatialSteps = [1, 3, 1];
 numSideCoords = (spatialSteps - 1) / 2;
 for i = 1:3
     xPos = (3-numSideCoords(i):3+numSideCoords(i))';
@@ -57,7 +57,7 @@ for n = 1:3
 
         lText = makeLText(lRange, i);
         text(coords{n}(i, 1) + xOffset, coords{n}(i, 2) + yOffset, ...
-            "$u^{" + uText + "}_{" + lText + "}$", ...
+            "$q^{" + uText + "}_{" + lText + "}$", ...
             'interpreter', 'latex', 'Fontsize', 18);
 
     end
@@ -67,8 +67,8 @@ annotation('doublearrow',[0.685 0.825],[0.935 0.935])
 annotation('doublearrow',[0.915 0.915],[0.564 0.8])
 text(4.5, 3.67, "$h$", 'interpreter','latex', 'horizontalAlignment', 'center', 'Fontsize', 18)
 text(5.70, 2.5, "$k$", 'interpreter','latex', 'horizontalAlignment', 'center', 'Fontsize', 18)
-text(3, 0.05, "space", 'horizontalAlignment', 'center', 'interpreter','latex', 'Fontsize', 18)
-text(-0.4, 2, "time", 'horizontalAlignment', 'center', 'interpreter','latex', 'Fontsize', 18, 'Rotation',90)
+text(3, 0.05, "space", 'horizontalAlignment', 'center', 'Fontsize', 18)
+text(-0.4, 2, "time", 'horizontalAlignment', 'center', 'Fontsize', 18, 'Rotation',90)
 annotation('doublearrow',[0.16 0.905],[0.12 0.12])
 annotation('arrow',[0.05 0.05],[0.2 0.905])
 set(gca, 'Position', [0.1600 0.2000 0.7450 0.7250])

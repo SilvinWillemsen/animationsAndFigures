@@ -1,7 +1,7 @@
 close all;
 clear all;
 
-drawThings = false;
+drawThings = true;
 energyCalc = true;
 plotPropagation = false;
 if plotPropagation 
@@ -24,8 +24,8 @@ cSq = T / (rho * H);
 Dparam = E * H^3/ (12*(1-nu^2));
 kappaSq = Dparam / (rho * H); % Stiffness coefficient [m/s]
 
-Lx = 1.5;               % Length in x direction [m]
-Ly = 1;                 % Length in y direction [m]
+Lx = 2;               % Length in x direction [m]
+Ly = 2;                 % Length in y direction [m]
 
 h = sqrt(cSq * k^2 + 4 * sig1 * k + sqrt((cSq * k^2 + 4 * sig1 * k)^2 + 16 * kappaSq * k^2));    % Grid spacing [m] (from CFL condition)
 Nx = floor(Lx/h);       % Number of intervals between grid points
@@ -48,6 +48,9 @@ if bc == "S"
     DyyEn = toeplitz([-2, 1, zeros(1, Nyu)]);
     DEn = kron(speye(Nx+1), DyyEn) + kron(DxxEn, speye(Ny+1));
     DEn = DEn / h^2;
+% elseif bc == "C"
+%     Nxu = Nx - 3;
+%     Nyu = Ny - 3;
 end    
 
 D = kron(speye(Nxu), Dyy) + kron(Dxx, speye(Nyu));
@@ -61,15 +64,18 @@ uNext = zeros(Nu, 1);
 u = zeros(Nu, 1);
 
 %% Initial conditions (raised cosine)
-halfWidth = floor(min(Nx, Ny) / 10);
+% halfWidth = floor(min(Nx, Ny) / 10);
+halfWidth = 1;
 width = 2 * halfWidth + 1;
-xLoc = floor(0.25 * Nx);
-yLoc = floor(0.5 * Ny);
+% xLoc = floor(0.25 * Nx);
+% yLoc = floor(0.5 * Ny);
+xLoc = 40;
+yLoc = 40;
 xRange = xLoc-halfWidth : xLoc+halfWidth;
 yRange = yLoc-halfWidth : yLoc+halfWidth;
 
 rcMat = zeros(Nyu, Nxu);
-rcMat(yRange, xRange) = 2.2 * hann(width) * hann(width)';
+rcMat(yRange, xRange) = 1 * hann(width) * hann(width)';
 u = reshape(rcMat, Nu, 1); % initialise current state  
 
 % Set initial velocity to zero
@@ -97,7 +103,7 @@ N = Nu-1;
 % [phi, lamb] = eig(full(D), 'vector');
 % 
 plotDampingAgainstFrequency = true;
-plotModalAnalysis;
+% plotModalAnalysis;
 percentCounter = 0;
 nCounter = 0;
 zeroU = zeros(Ny+1, Nx+1);

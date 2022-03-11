@@ -100,7 +100,7 @@ firstPlot = true;
 N = Nu-1;
 % [phi, lamb] = eig(full(D), 'vector');
 % 
-% plotModalAnalysis;
+plotModalAnalysis;
 percentCounter = 0;
 nCounter = 0;
 zeroU = zeros(Ny+1, Nx+1);

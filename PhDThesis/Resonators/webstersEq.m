@@ -11,7 +11,7 @@ plotHighLosses = false; % for energyfigure
 drawThings = false;
 drawSpeed = 1;
 
-impulse = true;
+impulse = false;
 impulseTest = false;
 fs = 44100;         % Sample rate (Hz)
 k = 1/fs;           % Time step (s)
@@ -52,13 +52,13 @@ if ~impulse  && ~impulseTest
     
 %     in = chirp(t, 200, t(end), 800);
     f = 213;                % Pulse train frequency
-    dutyC = 0.5;           % Duty cycle [0-1]
-    amp = 1;                % Amplitude
+    dutyC = 0.25;           % Duty cycle [0-1]
+    amp = 100;                % Amplitude
 
     %% Create input signal
-    for n = 0:lengthSound
+    for n = 0:lengthSound-1
         if mod(n, fs / f) <= fs / f * dutyC
-            in(n+1) = amp *sin(f * pi / dutyC * mod(n, fs / f) / fs);
+            in(n+1) = amp * sin(f * pi / dutyC * mod(n, fs / f) / fs);
         else
             in(n+1) = 0;
         end
@@ -68,9 +68,9 @@ if ~impulse  && ~impulseTest
     plot(in)
     xlim([0,1000])
     in = in * amp;
-    rampLength = 0; 
+    rampLength = 1000; 
     env = [linspace(0, 1, rampLength), ones(1, lengthSound - rampLength)];
-%     in = in .* env;
+    in = in .* env;
 %     in = in - sum(in) / length(in);
     
 elseif impulseTest
@@ -131,7 +131,7 @@ C(end, end) = -1 + alfMinus;
 % 
 plotDampingAgainstFrequency = true;
 firstPlot = true;
-plotModalAnalysis;
+% plotModalAnalysis;
 % figure
 % scatter(1:length(s)-1, (imag(s(2:end))-imag(s(1:end-1)))/(2*pi))
 % ylim([0, 100])
@@ -260,12 +260,11 @@ plot(t, out, 'k', 'Linewidth', 2)
 
 xlim([0, 5000])
 % ylim([-1.1, 1.1])
-xLab = xlabel("$n$", 'interpreter', 'latex');
-yLab = ylabel("$u^n_N$", 'interpreter', 'latex');
 
+ylim([-0.25, 0.25]);
 yLim = ylim;
-ylim([yLim * 1.1]);
-yLim = yLim;
+xLab = xlabel("$n$", 'interpreter', 'latex');
+yLab = ylabel("$\Psi_N^n$", 'interpreter', 'latex');
 
 xLab.Position(2) = yLim(1) - (yLim(2) - yLim(1)) * 0.18;
 xLim = xlim;

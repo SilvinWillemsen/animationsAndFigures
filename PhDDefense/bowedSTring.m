@@ -1,12 +1,26 @@
 close all;
 clear all;
 
-
-drawThings = false;
+drawThings = true;
 drawEnergy = false;
-drawSpeed = 15;
+drawSpeed = 1;
 drawStart = 132300;
-plotSubplots = true;
+plotSubplots = false;
+if plotSubplots
+    subplotMod = 4;
+else
+    subplotMod = 0;
+end
+recordVid = true;
+if drawThings
+    if recordVid
+        slowdown = 1;
+        loops = 400 * slowdown;
+        M(loops) = struct('cdata',[],'colormap',[]);
+        frame = 1;
+    end
+end
+breakFlag = false;
 
 %% Initialise variables
 fs = 44100;         % Sample rate [Hz]
@@ -50,7 +64,7 @@ N = N - 2;
 a = 100;
 BM = sqrt(2 * a) * exp(0.5);
 fB = 1;
-FB = 1 / (rho * A);
+FB = fB / (rho * A);
 vB = 0.2;
 
 Iu = zeros(1, N+1);
@@ -111,7 +125,7 @@ if drawThings
     fig = 1;
 end
 
-tol = 1e-4;
+tol = 1e-7;
 vRel = 0;
 %% Simulation loop
 for n = 1:lengthSound
@@ -136,6 +150,7 @@ for n = 1:lengthSound
         i = i + 1;
     end
     iSave(n) = i;
+    vRelSave(n) = vRel;
     uNext = (B * u + C * uPrev - Ju * k^2 * FB * BM * vRel * exp(-a * vRel^2)) / Amat;
 
     % Retrieve output
@@ -163,7 +178,7 @@ for n = 1:lengthSound
     totEnergy(n) = kinEnergy(n) + potEnergy(n) + qTot + bowTot;
     
     %% plot stuff
-    if drawThings && mod(n, drawSpeed) == 4 && n > drawStart
+    if drawThings && mod(n, drawSpeed) == subplotMod && n > drawStart
         if ~drawEnergy
             if plotSubplots
             	subplot(2, 3, fig)
@@ -179,6 +194,11 @@ for n = 1:lengthSound
                 title("$n = " + n + "$", 'interpreter', 'latex')
             end
             xLab = xlabel('$l$', 'interpreter', 'latex', 'Fontsize', 16);
+            if drawStart < fs
+                ylim([-1e-4, 1e-4])
+            else
+                ylim([-1e-3, 1e-3])
+            end
             yLim = ylim;
             xLab.Position(2) = yLim(1) - (yLim(2) - yLim(1)) * 0.07;
             yLab = ylabel('$u_l^n$', 'interpreter', 'latex', 'Fontsize', 16);
@@ -211,11 +231,20 @@ for n = 1:lengthSound
             end
 %             set(gca, 'Fontsize', 16, 'tickLabelInterpreter', 'latex', ...
 %                 'Position', [0.1036 0.1396 0.8750 0.7658], 'Linewidth', 2)
+            set(gcf, 'color', 'w')
+
             drawnow;
         
         else
-            plot(totEnergy(1:n) / totEnergy(1) - 1)         
+            plot(totEnergy(1:n) / totEnergy(1) - 1)  
             drawnow;
+        end
+        for jj = 1:slowdown
+            M(frame) = getframe (gcf);
+            frame = frame + 1;
+            if frame > loops * slowdown
+                breakFlag = true;
+            end
         end
 %         drawnow;
     end
@@ -223,13 +252,15 @@ for n = 1:lengthSound
     uPrev = u;
     u = uNext;
     
+    if breakFlag
+        break;
+    end
+    
 end
-
-plotEnergy;
-
+%%
 figure('Position', [173 549 786 249])
 outrange = drawStart:drawStart+1000;
-plot(outrange, out(outrange), 'k', 'Linewidth', 2)
+plot((1:lengthSound) / fs, out, 'k', 'Linewidth', 0.5)
 
 % xlim([0, 0.1])
 % yLim = ylim;
@@ -237,11 +268,11 @@ plot(outrange, out(outrange), 'k', 'Linewidth', 2)
 
 
 % ylim([-1.5e-4, 1.5e-4])
-xlim([outrange(1), outrange(end)])
+% xlim([outrange(1), outrange(end)] / fs)
 yLim = ylim;
 xLim = xlim;
 grid on
-xLab2 = xlabel("$n$", 'interpreter', 'latex');
+xLab2 = xlabel("$t$", 'interpreter', 'latex');
 yLab2 = ylabel("$u_{" + outLoc + "}^n$", 'interpreter', 'latex', 'Fontsize', 20);
 yLab2.Position(1) = xLim(1) -0.02 * (xLim(2) - xLim(1));
 xLab2.Position(2) = yLim(1) -0.15 * (yLim(2) - yLim(1));
@@ -252,48 +283,12 @@ set(gca, 'Linewidth', 1.5, 'Fontsize', 16,...
     'TickLabelInterpreter', 'latex')
 set(gcf, 'color', 'w')
 
-
-% plot(iSave)
-% %% Plotting
-% figure('Position', [173 578 827 220])
-% 
-% t = 1:lengthSound;
-% % plot(t, zeros(length(t), 1), '--', 'Linewidth', 2, 'color', [0.5, 0.5, 0.5])
-% % hold on;
-% subp1 = subplot(1, 2, 1);
-% plot(t, out, 'k', 'Linewidth', 2)
-% 
-% xlim([0, 300])
-% ylim([-1.1, 1.1])
-% xLab = xlabel("$n$", 'interpreter', 'latex');
-% yLab = ylabel("$u^n_3$", 'interpreter', 'latex');
-% 
-% xLab.Position(2) = -1.35;
-% yLab.Position(1) = -15;
-% % grid on;
-% 
-% set(gca, 'Linewidth', 1.5, 'Fontsize', 16, ...
-%     'Position', [0.0532 0.2000 0.4115 0.7591], ...
-%     'TickLabelInterpreter', 'latex')
-% subplot(1, 2, 2)
-% dbFFT = 20 * log10(abs(fft(out)));
-% plot(0:lengthSound-1, dbFFT, 'k', 'Linewidth', 2);
-% xlim([0, lengthSound / 2])
-% ylim([-100, 100])
-% 
-% % grid on;
-% % xticks([c/2 : c/2 : 3000])
-% set(gca, 'Linewidth', 1.5, 'Fontsize', 16,...
-%     'Position', [0.5532 0.2000 0.4115 0.7591], ...
-%     'TickLabelInterpreter', 'latex')
-% 
-% xLab2 = xlabel("$f$ [Hz]", 'interpreter', 'latex');
-% yLab2 = ylabel("Magnitude [dB]", 'interpreter', 'latex');
-% 
-% % xLab2.Position(1) = 750;
-% yLim = ylim;
-% xLab2.Position(2) = yLim(1) -0.125 * (yLim(2) - yLim(1));
-% 
-% % yLab2.Position(1) = -70;
-% 
-% set(gcf, 'color', 'w')
+if recordVid && drawThings
+    while isempty(M(end).cdata)
+        M(end) = [];
+    end
+    v = VideoWriter('bowedString3sec.mp4', 'MPEG-4');
+    open(v)
+    writeVideo(v, M);
+    close(v)
+end
