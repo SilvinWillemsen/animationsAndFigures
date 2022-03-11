@@ -3,7 +3,7 @@ clear all;
 
 fs = 44100;
 k = 1/fs;
-lengthSound = fs;
+lengthSound = 2 * fs;
 
 % figure('Position', [0, 300, 600, 300]);
 drawStuff = false;
@@ -12,9 +12,9 @@ drawSpeed = 1;
 %% Parameters
 L = 1;
 c = 0;
-sig0 = 1;
-sig1 = 589;
-kappa = 0.03;
+sig0 = 0.1;
+sig1 = 0.000001;
+kappa = 0.006;
 
 % grid spacing
 % htest = c * k;
@@ -29,9 +29,10 @@ uNext = zeros(N+1, 1);
 u = zeros(N+1, 1);
 width = 5;
 % startHann = floor(N/pi) - width;
-startHann = width + 1;
+startHann = 1;
 endHann = startHann + 2*width;
 u(startHann:endHann) = hann(width*2+1);
+
 uPrev = u;
 
 %% Loop
@@ -60,7 +61,7 @@ for n = 1:lengthSound
         / (1 + sig0 * k);
 
     % retrieve output
-    out(n) = uNext(floor(N/pi));
+    out(n) = uNext(end-1);
 %     out(n) = uNext(end-2);
     %% plotting stuff
     if mod(n, drawSpeed) == 0 && drawStuff
@@ -98,3 +99,7 @@ ylabel("dB")
 ylim([-80, 80])
 set(gca, 'Linewidth', 2, 'Fontsize', 16, 'FontName', 'times')
 set(gcf, 'color', 'w')
+%%
+figure;
+spectrogram(out,512,64,512, 44100, 'yaxis');
+set(gca, 'Fontsize', 16, 'FontName', 'times')
